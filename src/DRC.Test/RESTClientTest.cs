@@ -1,4 +1,4 @@
-﻿namespace DRCTest
+﻿namespace DRC.Test
 {
     using System;
     using System.IO;
