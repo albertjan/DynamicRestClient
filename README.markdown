@@ -2,7 +2,7 @@
 
 A simple REST client. Using Dynamics.
 
-Lets asume there is a api at someapi.com which has a route /things to which you can do a get request it will return json containing a list of thing objects. You could write a client for this api like this:
+Lets asume there is a api at someapi.com which has a route `/things` to which you can do a get request it will return json containing a list of thing objects. You could write a client for this api like this:
 
 ```C#
 //New up a new client
@@ -13,7 +13,7 @@ me.Url = "http://someapi.com";
 
 //Set an input editor for the /things route
 me.GetThings.In = new Func<WebResponse, IEnumerable<Thing>> ( wr => {
-	//fictive
+	//fictive you'd have to import your own json deserializer atm.
 	return JSON.Deserialize<IEnumerable<Thing>>(wr.GetResponseStream());
 });
 
