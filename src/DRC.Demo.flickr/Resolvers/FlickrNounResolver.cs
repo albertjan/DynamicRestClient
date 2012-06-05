@@ -1,4 +1,4 @@
-﻿namespace DRC.DemoResolvers.flickr
+﻿namespace DRC.Demo.flickr.Resolvers
 {
     using Interfaces;
 

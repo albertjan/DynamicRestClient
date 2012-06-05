@@ -1,4 +1,4 @@
-namespace DRC.DemoResolvers.flickr
+namespace DRC.Demo.flickr.Resolvers
 {
     using System.Collections.Generic;
     using System.ComponentModel;
@@ -23,10 +23,10 @@ namespace DRC.DemoResolvers.flickr
             var props = TypeDescriptor.GetProperties (anonymousQueryObject);
             foreach (PropertyDescriptor prop in props)
             {
-                var val = prop.GetValue (anonymousQueryObject).ToString ();
+                var val = prop.GetValue (anonymousQueryObject);
                 if (val != null)
                 {
-                    yield return new KeyValuePair<string, string> (prop.Name, val);
+                    yield return new KeyValuePair<string, string> (prop.Name, val.ToString ());
                 }
             }
         }
