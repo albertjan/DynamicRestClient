@@ -13,7 +13,7 @@ me.Url = "http://someapi.com";
 //Set an input editor for a route
 me.In.GetThings = new Func<WebResponse, IEnumerable<Thing>> ( wr => {
 	//fictive
-	JSON.Deserialize<IEnumerable<Thing>>(wr.GetResponseStream());
+	return JSON.Deserialize<IEnumerable<Thing>>(wr.GetResponseStream());
 });
 
 //create an iterface to make it place nice again
@@ -31,5 +31,12 @@ var things = client.GetThings();
 
 ```
 
-Isn't it cute. More to come see the tests for more usages.
+Isn't it cute. More to come see the tests for more usages. 
+
+## To-do's ##
+
+* Make nuget
+* Add ImpromptuInterface dependency to repository
+* Write more documentation
+* Get feedback
 
