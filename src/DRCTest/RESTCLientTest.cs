@@ -215,10 +215,12 @@ namespace DRCTest
             dynamic me = new RESTClient();
             me.Url = "test://base";
 
-            var result = me.GetTest<string>(/*QueryString*/ new {page = "1", items = "50"},
+            var result = me.GetTest<string>(/*QueryString*/ 
+                                            new {page = "1", items = "50"},
                                             /*OutputEditorArguments*/
                                             1, 2, 3, 4, "5", "6",
-                                            /*URLParam*/    "param",
+                                            /*URLParam*/    
+                                            "param",
                                             /*OutputEditor*/
                                             new Func<int, string, int, string, int, int, byte[]>(
                                                 (i1, s1, i2, s2, i3, i4) =>
@@ -231,6 +233,7 @@ namespace DRCTest
                                                     Assert.AreEqual (i4, 4);
                                                     return new byte[16];
                                                 }),
+                                            /*InputEditor*/
                                             new Func<WebResponse, string>(w =>
                                             {
                                                 Assert.AreEqual(w.ResponseUri,
