@@ -1,0 +1,26 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DRC", "DRC\DRC.csproj", "{1954CF8D-F38F-4A67-A79F-97E1DFF4626E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DRCTest", "DRCTest\DRCTest.csproj", "{11A164F3-71CB-4F03-8D1D-4CA434944427}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1954CF8D-F38F-4A67-A79F-97E1DFF4626E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1954CF8D-F38F-4A67-A79F-97E1DFF4626E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1954CF8D-F38F-4A67-A79F-97E1DFF4626E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1954CF8D-F38F-4A67-A79F-97E1DFF4626E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{11A164F3-71CB-4F03-8D1D-4CA434944427}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{11A164F3-71CB-4F03-8D1D-4CA434944427}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{11A164F3-71CB-4F03-8D1D-4CA434944427}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{11A164F3-71CB-4F03-8D1D-4CA434944427}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
