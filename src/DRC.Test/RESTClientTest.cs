@@ -270,7 +270,7 @@
         
         [Test]
         [ExpectedException(typeof(ArgumentException), ExpectedMessage = "A Functionname must have atleast one token.")]
-        public void DefaultVerResolverTestEmptyFunctionName()
+        public void DefaultVerbResolverTestEmptyFunctionName()
         {
             new DefaultVerbResolver(new DefaultStringTokenizer()).ResolveVerb("");
         }
