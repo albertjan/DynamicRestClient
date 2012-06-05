@@ -36,7 +36,6 @@ Isn't it cute. More to come see the tests for more usages.
 ## To-do's ##
 
 * Make nuget
-* Add ImpromptuInterface dependency to repository
 * Write more documentation
 * Get feedback
 
