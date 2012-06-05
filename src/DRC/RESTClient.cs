@@ -1,5 +1,4 @@
-﻿
-namespace DRC
+﻿namespace DRC
 {
     using System;
     using System.Collections.Generic;
@@ -16,8 +15,6 @@ namespace DRC
 
     /// <summary>
     /// Set the URL first.
-    ///  
-    /// Set deserialization types
     /// 
     /// GetOrders() will result in GET URL + /orders will try to deserialize  to
     /// 
@@ -31,21 +28,6 @@ namespace DRC
     /// while it lives. If it stops working it will try to redetermine the method and types. If it can't 
     /// find the type it will return an expandoObject containing properties coresponding to the name and 
     /// if known type specified in the message.
-    /// 
-    /// If the deserialization method is unkown. It'll return a stream of byte[]. And one could write an 
-    /// extention method like so:
-    /// 
-    /// public static Order[] OrdersWithProtoBuf(this dynamic incomming)
-    /// {
-    ///     read, buffer, deser, return;
-    /// }
-    /// 
-    /// Or even make it dynamic I will try to do some examples:
-    /// 
-    /// public static dynamic WithProtoBuf(this dynamic incomming)
-    /// {
-    ///     if there are .proto files available we could do some cool stuff here.
-    /// }
     /// </summary>
     public class RESTClient: DynamicObject 
     {
@@ -67,6 +49,13 @@ namespace DRC
             VerbResolver = verbResolver ?? new DefaultVerbResolver(StringTokenizer);
         }
 
+
+        /// <summary>
+        /// Get an InputOutputEditorSetters object for _every_ name you put in here.
+        /// </summary>
+        /// <param name="binder"></param>
+        /// <param name="result"></param>
+        /// <returns></returns>
         public override bool TryGetMember (GetMemberBinder binder, out object result)
         {
             if (!_editorDelegates.ContainsKey(binder.Name)) 
@@ -76,6 +65,13 @@ namespace DRC
             return true;
         }
 
+        /// <summary>
+        /// Entry function for everything you can come up with.!
+        /// </summary>
+        /// <param name="binder"></param>
+        /// <param name="args"></param>
+        /// <param name="result"></param>
+        /// <returns></returns>
         public override bool TryInvokeMember (InvokeMemberBinder binder, object[] args, out object result)
         {
             //get the Type argument from the binder
@@ -88,35 +84,61 @@ namespace DRC
             var doCallParameters = GetDoCallParameters(typeArg, binder.Name, args);
             
             //dynamicly call a generic function
-            
             var method = GetType().GetMethod("DoCall").MakeGenericMethod(doCallParameters.GenericTypeArgument);
             result = method.Invoke (this, new object[] { verb, noun, doCallParameters.QueryDict, doCallParameters.InputEditor, doCallParameters.UrlParameters, doCallParameters.Payload });
 
             return true;
         }
 
+
+        /// <summary>
+        /// Find an input editor from the function arguments.
+        /// </summary>
+        /// <param name="functionArguments"></param>
+        /// <returns></returns>
         public Delegate FindInputEditor(IEnumerable<object> functionArguments)
         {
             return functionArguments.Where (o => o.GetType ().Name == "Func`2").Cast<Delegate> ().FirstOrDefault (d => d.IsInput ());
         }
 
+
+        /// <summary>
+        /// Find an output editor from the function arguments.
+        /// </summary>
+        /// <param name="functionArguments"></param>
+        /// <returns></returns>
         public Delegate FindOutputEditor (IEnumerable<object> functionArguments)
         {
             return functionArguments.Where (o => o.GetType ().Name.Contains("Func")).Cast<Delegate> ().FirstOrDefault (d => d.IsOutput ());
         }
 
+        /// <summary>
+        /// Here's where the magic happens. It collects the information to do the request and pull it through the correct delgates. 
+        /// </summary>
+        /// <param name="typeArg"></param>
+        /// <param name="binderName"></param>
+        /// <param name="args"></param>
+        /// <returns></returns>
         private CallMethodAgruments GetDoCallParameters(Type typeArg, string binderName, IEnumerable<object> args)
         {
             var argList = args.ToList ();
+            
+            //find the input and output editors if specified. or use the defaults.
+            var retval = new CallMethodAgruments
+            {
+                InputEditor = (_editorDelegates.ContainsKey(binderName) &&
+                            _editorDelegates[binderName].FirstOrDefault(d => d.IsInput()) != null)
+                                ? _editorDelegates[binderName].First(d => d.IsInput())
+                                : new Func<WebResponse, Stream>(s => s.GetResponseStream()),
+                OutputEditor = (_editorDelegates.ContainsKey(binderName) &&
+                                _editorDelegates[binderName].FirstOrDefault(d => d.IsOutput()) != null)
+                                ? _editorDelegates[binderName].First(d => d.IsOutput())
+                                : new Func<byte[], byte[]>(b => b)
+            };
 
-            var retval = new CallMethodAgruments();
-
-            retval.InputEditor = (_editorDelegates.ContainsKey (binderName) && _editorDelegates[binderName].FirstOrDefault (d => d.IsInput ()) != null) ? _editorDelegates[binderName].First (d => d.IsInput ()) : new Func<WebResponse, Stream> (s => s.GetResponseStream());
-            retval.OutputEditor = (_editorDelegates.ContainsKey (binderName) && _editorDelegates[binderName].FirstOrDefault (d => d.IsOutput ()) != null) ? _editorDelegates[binderName].First (d => d.IsOutput ()) : new Func<byte[], byte[]> (b => b); 
-            //delegate checking!
-
-            retval.InputEditor = FindInputEditor(args) ?? retval.InputEditor;
-            retval.OutputEditor = FindOutputEditor (args) ?? retval.OutputEditor;
+            //if the arguments have and input or output editor use that one.
+            retval.InputEditor = FindInputEditor (argList) ?? retval.InputEditor;
+            retval.OutputEditor = FindOutputEditor (argList) ?? retval.OutputEditor;
             
             retval.GenericTypeArgument = typeArg ?? retval.InputEditor.GetType().GetGenericArguments().Last();
 
@@ -131,21 +153,16 @@ namespace DRC
             
             retval.QueryDict = queryDict;
 
-
             //outputeditorargumentselection and payload generation
-
             if (retval.OutputEditor.GetType().GetGenericArguments().First() == typeof(byte[]))
                 if (argList.FirstOrDefault(o => o is byte[]) == null)
                     argList.Add(new byte[0]);
 
-            //haal de types van de argumenten van de output editor delegate op, behalve de
-            //laatste dit is namelijk de output type en dus (byte[])                           
+            //get the types from the outputeditor delegate arguments haal except the last which is the output type (byte[])
             var outputEditorArgumentsTypes = retval.OutputEditor.GetType().GetGenericArguments().SkipLastN(1);
             var sortedArgs = new List<object> ();
 
-            //Roep de OutputEditor delegate aan met de door de delegate aangegeven argument types 
-            //geselecteerd uit de aan de functie mee gegeven argumenten.
-            //invoke de output editor delegate.
+            //Call the outputeditor delegate with the arguments given to the function. And invoke it.
             try
             {
                 var typeOrderDict = new Dictionary<string, int>();
@@ -161,8 +178,8 @@ namespace DRC
                     sortedArgs.Add(argList.TakeNthOccurence(o=>o.GetType().Name == type, typeOrderDict[outputEditorArgumentsType]));
                 }
 
-                retval.Payload = (byte[])retval.OutputEditor.FastDynamicInvoke (sortedArgs.ToArray ()); /* FastDynamicInvoke wil een array anders ziet hij 
-                                                                                                         * maar 1 argument */
+                retval.Payload = (byte[])retval.OutputEditor.FastDynamicInvoke (sortedArgs.ToArray ()); /* FastDynamicInvoke wants an
+                                                                                                         * array */
             }
             catch (Exception ex)
             {
