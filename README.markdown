@@ -35,7 +35,6 @@ Isn't it cute. More to come see the tests for more usages.
 
 ## To-do's ##
 
-* Make nuget
 * Write more documentation
 * Get feedback
 
