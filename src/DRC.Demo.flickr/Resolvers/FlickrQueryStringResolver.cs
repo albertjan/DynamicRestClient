@@ -41,7 +41,7 @@ namespace DRC.Demo.flickr.Resolvers
 
             foreach (var token in tokensMinusLastMinusOn)
             {
-                if (token == tokensMinusLastMinusOn.Last ())
+                if (token == tokensMinusLastMinusOn.Last () && tokens.Count() > 2)
                     retval += token;
                 else
                     retval += "." + token.ToLower();
