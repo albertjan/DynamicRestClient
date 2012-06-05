@@ -1,6 +1,5 @@
 # DynamicRestClient #
 
-
 A simple REST client. Using Dynamics.
 
 ```C#
@@ -21,7 +20,6 @@ interface IAmAThingGetter
 {
 	IEnumerable<Thing> GetThings();
 }
-
 
 //makes client behave typesafe
 IAmAThingGetter client = Impromptu.ActLike<IAmAThingGetter>(me);
