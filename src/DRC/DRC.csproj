@@ -56,8 +56,8 @@
     <Compile Include="Interfaces\IStringTokenizer.cs" />
     <Compile Include="Interfaces\IVerbResolver.cs" />
     <Compile Include="Interfaces\Verb.cs" />
-    <Compile Include="RESTClient.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RESTClient.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
