@@ -11,14 +11,21 @@ dynamic me = new RESTClient ();
 //Set the url 
 me.Url = "http://someapi.com";
 
-//Set an input editor for a route
+//Set an input editor for the /things route
 me.GetThings.In = new Func<WebResponse, IEnumerable<Thing>> ( wr => {
 	//fictive
 	return JSON.Deserialize<IEnumerable<Thing>>(wr.GetResponseStream());
 });
 
+var things = (IEnumerable<Thing>)client.GetThings();
+```
+
+ImpromptuInterface lets you do this:
+
+
+```C#
 //create an iterface to make it place nice again
-interface IAmAThingGetter
+public interface IAmAThingGetter
 {
 	IEnumerable<Thing> GetThings();
 }
@@ -26,7 +33,7 @@ interface IAmAThingGetter
 //makes client behave typesafe
 IAmAThingGetter client = Impromptu.ActLike<IAmAThingGetter>(me);
 
-//var is an IEnumerable<Thing> here.
+//makes things typesafe-ish :)
 var things = client.GetThings();
 
 ```
