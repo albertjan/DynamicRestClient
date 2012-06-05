@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace INounResolverDemoImplementations
+﻿namespace DRC.Interfaces
 {
     public interface INounResolver
     {

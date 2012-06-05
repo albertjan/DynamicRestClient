@@ -1,10 +1,8 @@
-using System;
-using System.Linq;
-using DRCSharedInterfaces;
-using INounResolverDemoImplementations;
-
 namespace DRC.Defaults
 {
+    using System.Linq;
+    using Interfaces;
+
     public class DefaultNounResolver : INounResolver
     {
         public IStringTokenizer Tokenizer { get; set; }

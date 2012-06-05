@@ -1,4 +1,4 @@
-namespace DRCSharedInterfaces
+namespace DRC.Interfaces
 {
     public interface IVerbResolver
     {

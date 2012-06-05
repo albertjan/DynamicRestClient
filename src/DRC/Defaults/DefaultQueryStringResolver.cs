@@ -1,10 +1,10 @@
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using DRCSharedInterfaces;
-
 namespace DRC.Defaults
 {
+    using System.Collections.Generic;
+    using System.ComponentModel;
+
+    using Interfaces;
+
     public class DefaultQueryStringResolver : IQueryStringResolver
     {
         public IStringTokenizer Tokenizer { get; set; }
@@ -19,10 +19,10 @@ namespace DRC.Defaults
             var props = TypeDescriptor.GetProperties (anonymousQueryObject);
             foreach (PropertyDescriptor prop in props)
             {
-                var val = prop.GetValue (anonymousQueryObject).ToString ();
+                var val = prop.GetValue (anonymousQueryObject);
                 if (val != null)
                 {
-                    yield return new KeyValuePair<string, string> (prop.Name, val);
+                    yield return new KeyValuePair<string, string> (prop.Name, val.ToString ());
                 }
             }
         }

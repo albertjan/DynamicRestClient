@@ -1,10 +1,10 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using DRCSharedInterfaces;
-
-namespace DRC.Defaults
+﻿namespace DRC.Defaults
 {
+    using System.Collections.Generic;
+    using System.Text;
+
+    using Interfaces;
+
     public class DefaultCachedStringTokenizer : IStringTokenizer
     {
         private static readonly Dictionary<string, IEnumerable<string>> CacheDict = new Dictionary<string, IEnumerable<string>>();

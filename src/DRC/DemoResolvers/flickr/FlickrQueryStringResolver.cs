@@ -1,10 +1,11 @@
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using DRCSharedInterfaces;
-
 namespace DRC.DemoResolvers.flickr
 {
+    using System.Collections.Generic;
+    using System.ComponentModel;
+    using System.Linq;
+
+    using Interfaces;
+
     public class FlickrQueryStringResolver : IQueryStringResolver
     {
         public IStringTokenizer Tokenizer { get; set; }

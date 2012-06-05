@@ -1,10 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using DRCSharedInterfaces;
-
-namespace DRC.Defaults
+﻿namespace DRC.Defaults
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Text;
+
+    using Interfaces;
+
     public class DefaultStringTokenizer : IStringTokenizer
     {
         public IEnumerable<string> GetTokens(string input)
@@ -22,8 +23,10 @@ namespace DRC.Defaults
                 sb.Append(c);
                 last = c;
             }
-            if (!String.IsNullOrWhiteSpace(sb.ToString())) 
+            if (!String.IsNullOrWhiteSpace (sb.ToString ()))
+            {
                 yield return sb.ToString();
+            }
         }
     }
 }

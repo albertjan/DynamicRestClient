@@ -6,7 +6,7 @@
     using System.Text;
     using DRC;
     using DRC.Defaults;
-    using DRCSharedInterfaces;
+    using DRC.Interfaces;
     using NUnit.Framework;
 
     [TestFixture]

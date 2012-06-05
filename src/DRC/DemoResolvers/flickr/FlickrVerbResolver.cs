@@ -1,9 +1,7 @@
-﻿using System;
-using System.Linq;
-using DRCSharedInterfaces;
-
-namespace DRC.DemoResolvers.flickr
+﻿namespace DRC.DemoResolvers.flickr
 {
+    using Interfaces;
+
     public class FlickrVerbResolver : IVerbResolver
     {
         public IStringTokenizer Tokenizer { get; set; }

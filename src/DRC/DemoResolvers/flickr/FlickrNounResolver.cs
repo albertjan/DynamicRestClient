@@ -1,8 +1,7 @@
-﻿using DRCSharedInterfaces;
-using INounResolverDemoImplementations;
-
-namespace DRC.DemoResolvers.flickr
+﻿namespace DRC.DemoResolvers.flickr
 {
+    using Interfaces;
+
     public class FlickrNounResolver : INounResolver
     {
         public IStringTokenizer Tokenizer { get; set; }

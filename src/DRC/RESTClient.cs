@@ -1,4 +1,5 @@
-﻿namespace DRC
+﻿
+namespace DRC
 {
     using System;
     using System.Collections.Generic;
@@ -6,11 +7,11 @@
     using System.IO;
     using System.Linq;
     using System.Net;
-    using System.Text;
-    using DRC.Defaults;
-    using DRCSharedInterfaces;
+    
+    using Defaults;
+    using Interfaces;
+
     using ImpromptuInterface;
-    using INounResolverDemoImplementations;
 
 
     /// <summary>
