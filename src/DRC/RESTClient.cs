@@ -1,17 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Dynamic;
-using System.IO;
-using System.Linq;
-using System.Net;
-using System.Text;
-using DRC.Defaults;
-using DRCSharedInterfaces;
-using ImpromptuInterface;
-using INounResolverDemoImplementations;
-
-namespace DRC
+﻿namespace DRC
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Dynamic;
+    using System.IO;
+    using System.Linq;
+    using System.Net;
+    using System.Text;
+    using DRC.Defaults;
+    using DRCSharedInterfaces;
+    using ImpromptuInterface;
+    using INounResolverDemoImplementations;
+
+
     /// <summary>
     /// Set the URL first.
     ///  
@@ -47,7 +48,7 @@ namespace DRC
     /// </summary>
     public class RESTClient: DynamicObject 
     {
-        private Dictionary<string, List<Delegate>> _editorDelegates = new Dictionary<string, List<Delegate>>();
+        private readonly Dictionary<string, List<Delegate>> _editorDelegates = new Dictionary<string, List<Delegate>>();
 
         public INounResolver NounResolver { get; set; }
         public IQueryStringResolver QueryStringResolver { get; set; }
