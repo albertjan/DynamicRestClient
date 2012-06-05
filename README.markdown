@@ -11,7 +11,7 @@ dynamic me = new RESTClient ();
 me.Url = "http://someapi.com";
 
 //Set an input editor for a route
-me.In.GetThings = new Func<WebResponse, IEnumerable<Thing>> ( wr => {
+me.GetThings.In = new Func<WebResponse, IEnumerable<Thing>> ( wr => {
 	//fictive
 	return JSON.Deserialize<IEnumerable<Thing>>(wr.GetResponseStream());
 });
@@ -24,7 +24,7 @@ interface IAmAThingGetter
 
 
 //makes client behave typesafe
-IAmAThingGetter client = me.ActLike<IAmAThingGetter>();
+IAmAThingGetter client = Impromptu.ActLike<IAmAThingGetter>(me);
 
 //var is an IEnumerable<Thing> here.
 var things = client.GetThings();

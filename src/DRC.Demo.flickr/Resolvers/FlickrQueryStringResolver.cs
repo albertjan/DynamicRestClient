@@ -34,10 +34,14 @@ namespace DRC.Demo.flickr.Resolvers
         private static string GetFlickrMethodCall (IEnumerable<string> tokens)
         {
             var retval = "";
-               
-            foreach (var token in tokens)
+
+            retval = "." + tokens.Last ().ToLower ();
+
+            var tokensMinusLastMinusOn = tokens.Take (tokens.Count () - 1).Where (t => t != "On");
+
+            foreach (var token in tokensMinusLastMinusOn)
             {
-                if (token == tokens.Last ())
+                if (token == tokensMinusLastMinusOn.Last ())
                     retval += token;
                 else
                     retval += "." + token.ToLower();

@@ -23,6 +23,9 @@
     <OutputPath>bin\Release\</OutputPath>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="ImpromptuInterface, Version=5.6.7.12678, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\ImpromptuInterface.5.6.7\lib\net40\ImpromptuInterface.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -43,6 +46,9 @@
       <Project>{1954CF8D-F38F-4A67-A79F-97E1DFF4626E}</Project>
       <Name>DRC</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
