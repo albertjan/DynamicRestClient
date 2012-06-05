@@ -35,4 +35,7 @@ Isn't it cute. More to come see the tests for more usages.
 
 * Write more documentation
 * Get feedback
-
+* Content Negotiation + Deserialisation (json, xml, protocol-buggers)
+* XML->dynamic and JSON->dynamic should be shipped with DRC
+* Glue things together with TinyIOC.
+* Maybe loose the ImpromtuInterface ref
