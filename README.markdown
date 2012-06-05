@@ -2,11 +2,13 @@
 
 A simple REST client. Using Dynamics.
 
+Lets asume there is a api at someapi.com which has a route /things to which you can do a get request it will return json containing a list of thing objects. You could write a client for this api like this:
+
 ```C#
 //New up a new client
 dynamic me = new RESTClient ();
 
-//Set the url
+//Set the url 
 me.Url = "http://someapi.com";
 
 //Set an input editor for a route
