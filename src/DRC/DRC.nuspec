@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>DRC</id>
+    <version>0.0.0.1</version>
+    <title>A Dynamic REST Client</title>
+    <authors>Albert-Jan Nijburg</authors>
+    <owners>Albert-Jan Nijburg</owners>
+    <licenseUrl>https://github.com/albertjan/DynamicRestClient/blob/master/license.txt</licenseUrl>
+    <projectUrl>https://github.com/albertjan/DynamicRestClient</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>$description$</description>
+    <releaseNotes>Initial release.</releaseNotes>
+    <copyright>Copyright Albert-Jan Nijburg 2012</copyright>
+    <tags>DRC REST http</tags>
+    <dependencies>
+      <dependency id="ImpromptuInterface" version="5.6.7" />
+    </dependencies>
+  </metadata>
+</package>
