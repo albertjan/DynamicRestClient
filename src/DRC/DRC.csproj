@@ -58,6 +58,7 @@
     <Compile Include="Interfaces\Verb.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RESTClient.cs" />
+    <Compile Include="SimpleJson.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

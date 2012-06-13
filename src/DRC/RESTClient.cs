@@ -1,4 +1,6 @@
-﻿namespace DRC
+﻿using System.Text;
+
+namespace DRC
 {
     using System;
     using System.Collections.Generic;
@@ -145,7 +147,19 @@
             retval.GenericTypeArgument = typeArg ?? retval.InputEditor.GetType().GetGenericArguments().Last();
 
             if (typeArg != null && retval.InputEditor.GetType ().GetGenericArguments ().Last () != typeArg)
-                throw new ArgumentException ("GenericArgument not the same as TOut of the InputEditor");
+            {
+
+                var func = typeof (Func<,>).MakeGenericType(typeof(WebResponse), typeArg);
+                var me = typeof (RESTClient).GetMethod ("GetDeserializationMethod").MakeGenericMethod (typeArg);
+
+                retval.InputEditor = Delegate.CreateDelegate(func, this, me, true);
+                     
+                //throw new ArgumentException ("GenericArgument not the same as TOut of the InputEditor");
+            }
+
+            if (typeArg != null && retval.InputEditor.GetType().GetGenericArguments().Last() != typeArg)
+                throw new ArgumentException("GenericArgument not the same as TOut of the InputEditor");
+
 
             //find the anonymous type to turn into the querystring
             var anonymousQueryObject = argList.FirstOrDefault (o => o.GetType ().Name.Contains ("Anonymous"));
@@ -199,6 +213,15 @@
             return retval;
         }
         
+        private T GetDeserializationMethod<T>(WebResponse ofT)
+        {
+            using (var sr = new StreamReader(ofT.GetResponseStream()))
+            {
+                return SimpleJson.DeserializeObject<T>(sr.ReadToEnd());
+            }
+        }
+
+
         public T DoCall<T> (Verb callMethod, string site, IEnumerable<KeyValuePair<string, string>> queryString, Func<WebResponse, T> editor, object[] urlParameters = null, byte[] what = null)
         {
             if (urlParameters != null && urlParameters.Count() > 0)

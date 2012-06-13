@@ -327,10 +327,29 @@
 
             me.GetTest.Url = "bananas/overthere";
 
-            me.OutputPipeLine.Add (0.1, Tuple.Create ("hi", new Action<WebRequest> (r => Assert.AreEqual ("test://test/bananas/overthere", r.RequestUri.ToString()))));
+            me.OutputPipeLine.Add (0.1, Tuple.Create ("hi", new Action<WebRequest> (r => Assert.AreEqual ("test://test/bananas/overthere", r.RequestUri.ToString ()))));
 
-            me.GetTest();
+            me.GetTest ();
         }
+
+        [Test]
+        public void ShouldTryToDeserializeToGenericTypeArgument()
+        {
+            var test = TestWebRequestCreate.CreateTestRequest (SimpleJson.SerializeObject(new AModel{ D =0.1, I =1, L =2, S ="s"}));
+            test.ContentType = "application/json";
+            dynamic me = new RESTClient ();
+            me.Url = "test://test";
+            var a = me.GetTest<AModel> ();
+            Assert.AreEqual(typeof(AModel), a.GetType());
+        }
+    }
+
+    class AModel
+    {
+        public int I { get; set; }
+        public string S { get; set; }
+        public long L { get; set; }
+        public double D { get; set; }
     }
 
     class TestWebRequestCreate : IWebRequestCreate
