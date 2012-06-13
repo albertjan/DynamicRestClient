@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Reflection;
+using System.Text;
 
 namespace DRC
 {
@@ -146,11 +147,11 @@ namespace DRC
             
             retval.GenericTypeArgument = typeArg ?? retval.InputEditor.GetType().GetGenericArguments().Last();
 
-            if (typeArg != null && retval.InputEditor.GetType ().GetGenericArguments ().Last () != typeArg)
+            if (typeArg != null && retval.InputEditor.GetType ().GetGenericArguments ().Last () != typeArg && retval.InputEditor.GetType ().GetGenericArguments ().Last () == typeof(Stream))
             {
 
                 var func = typeof (Func<,>).MakeGenericType(typeof(WebResponse), typeArg);
-                var me = typeof (RESTClient).GetMethod ("GetDeserializationMethod").MakeGenericMethod (typeArg);
+                var me = typeof (RESTClient).GetMethod ("GetDeserializationMethod", BindingFlags.NonPublic | BindingFlags.Instance).MakeGenericMethod (typeArg);
 
                 retval.InputEditor = Delegate.CreateDelegate(func, this, me, true);
                      
