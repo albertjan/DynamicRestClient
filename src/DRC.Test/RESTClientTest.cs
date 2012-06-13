@@ -289,6 +289,48 @@
             Assert.AreEqual (del, Verb.DELETE);
             Assert.AreEqual (bananas, Verb.GET);
         }
+
+        [Test]
+        public void ShouldExecutePipeLineEntries()
+        {
+            TestWebRequestCreate.CreateTestRequest ("dummy");
+            dynamic me = new RESTClient ();
+            me.Url = "test://test";
+
+            var pipelinetest = "apeshit";
+            var pipelinetest2 = "apeshit";
+
+            me.InputPipeLine.Add (2.5, Tuple.Create ("pipelineitem", new Action<WebResponse> (resp =>{ pipelinetest = "yep"; })));
+            me.OutputPipeLine.Add (0.002, Tuple.Create ("pipelineitem", new Action<WebRequest> (resp => { pipelinetest2 = "yep"; })));
+
+            me.GetTest.In = new Func<WebResponse, string> (w =>
+            {
+                string test;
+                using (var sr = new StreamReader (w.GetResponseStream ()))
+                    test = sr.ReadToEnd ();
+
+                Assert.AreEqual (test, "dummy");
+                return "";
+            });
+            me.GetTest ();
+
+            Assert.AreEqual ("yep", pipelinetest);
+            Assert.AreEqual ("yep", pipelinetest2);
+        }
+
+        [Test]
+        public void ShouldUseSpecifiedUrl()
+        {
+            TestWebRequestCreate.CreateTestRequest ("dummy");
+            dynamic me = new RESTClient ();
+            me.Url = "test://test";
+
+            me.GetTest.Url = "bananas/overthere";
+
+            me.OutputPipeLine.Add (0.1, Tuple.Create ("hi", new Action<WebRequest> (r => Assert.AreEqual ("test://test/bananas/overthere", r.RequestUri.ToString()))));
+
+            me.GetTest();
+        }
     }
 
     class TestWebRequestCreate : IWebRequestCreate

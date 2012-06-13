@@ -47,8 +47,14 @@
             NounResolver = nounResolver ?? new DefaultNounResolver (StringTokenizer);
             QueryStringResolver = queryStringResolver ?? new DefaultQueryStringResolver(StringTokenizer);
             VerbResolver = verbResolver ?? new DefaultVerbResolver(StringTokenizer);
+
+            InputPipeLine = new Dictionary<double, Tuple<string, Action<WebResponse>>>();
+            OutputPipeLine = new Dictionary<double, Tuple<string, Action<WebRequest>>>();
         }
-        
+
+        public Dictionary<double, Tuple<string, Action<WebResponse>>> InputPipeLine { get; set; }
+        public Dictionary<double, Tuple<string, Action<WebRequest>>> OutputPipeLine { get; set; }
+
         /// <summary>
         /// Get an InputOutputEditorSetters object for _every_ name you put in here.
         /// </summary>
@@ -227,7 +233,20 @@
                 default:
                     throw new ArgumentOutOfRangeException("callMethod");
             }
-            return editor (wr.GetResponse ());
+            
+            foreach (var pipelineItem in OutputPipeLine.OrderBy(p => p.Key))
+            {
+                pipelineItem.Value.Item2(wr);
+            }
+            
+            var resp = wr.GetResponse();
+
+            foreach (var pipelineItem in InputPipeLine.OrderBy(p=> p.Key))
+            {
+                pipelineItem.Value.Item2(resp);
+            }
+
+            return editor (resp);
         }
 
         private static string CreateURI(string url, string site, IEnumerable<KeyValuePair<string, string>> queryDict)
