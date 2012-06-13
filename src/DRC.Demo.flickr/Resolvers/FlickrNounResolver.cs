@@ -1,4 +1,7 @@
-﻿namespace DRC.Demo.flickr.Resolvers
+﻿using System;
+using System.Collections.Generic;
+
+namespace DRC.Demo.flickr.Resolvers
 {
     using Interfaces;
 
@@ -18,10 +21,11 @@
             //      one would need to call:
             //      http://api.flickr.com/services/rest/?method=flick.people.getInfo&api_key=[key]&user_id=61304303%40N08        
             // and we would want then: GetInfoOnPeople(new { user_id = 61304303@N08 });
-            // So in the case of flickr this function would always resolve "" and filling the QueryDictionary
-
+            // So in the case of flickr this function would always resolve "/services/rest"
             
             return "/services/rest";
         }
+
+        public Dictionary<string, string> PredefinedUrls { get; set; }
     }
 }

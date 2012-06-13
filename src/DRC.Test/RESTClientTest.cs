@@ -260,12 +260,12 @@
 
             dynamic me = new RESTClient ();
             me.Url = "test://base";
-            me.GetMultipleNounTest.Out = new Func<WebResponse, string>(w =>
+            me.GetMultipleNounTest.In = new Func<WebResponse, string>(w =>
             {
                 Assert.AreEqual(new Uri("test://base/Multiple/Noun/Test"), w.ResponseUri);
                 return "yes";
             });
-            me.GetMultipleNounTest();
+            me.GetMultipleNounsTest();
         }
         
         [Test]
@@ -276,7 +276,7 @@
         }
 
         [Test]
-        public void DefaultVerResolverTest ()
+        public void DefaultVerbResolverTest ()
         {
             var get = new DefaultVerbResolver (new DefaultStringTokenizer ()).ResolveVerb ("Get");
             var put = new DefaultVerbResolver (new DefaultStringTokenizer ()).ResolveVerb ("Put");

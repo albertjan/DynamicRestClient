@@ -11,8 +11,7 @@
     using Interfaces;
 
     using ImpromptuInterface;
-
-
+    
     /// <summary>
     /// Set the URL first.
     /// 
@@ -31,12 +30,13 @@
     /// </summary>
     public class RESTClient: DynamicObject 
     {
-        private readonly Dictionary<string, List<Delegate>> _editorDelegates = new Dictionary<string, List<Delegate>>();
-
+        private readonly Dictionary<string, List<Delegate>> _editorDelegates = new Dictionary<string, List<Delegate>> ();
+        
         public INounResolver NounResolver { get; set; }
         public IQueryStringResolver QueryStringResolver { get; set; }
         public IVerbResolver VerbResolver { get; set; }
         public IStringTokenizer StringTokenizer { get; set; }
+        public string Url { get; set; }
 
         public RESTClient(INounResolver nounResolver = null, 
             IQueryStringResolver queryStringResolver = null,
@@ -48,8 +48,7 @@
             QueryStringResolver = queryStringResolver ?? new DefaultQueryStringResolver(StringTokenizer);
             VerbResolver = verbResolver ?? new DefaultVerbResolver(StringTokenizer);
         }
-
-
+        
         /// <summary>
         /// Get an InputOutputEditorSetters object for _every_ name you put in here.
         /// </summary>
@@ -58,14 +57,11 @@
         /// <returns></returns>
         public override bool TryGetMember (GetMemberBinder binder, out object result)
         {
-            if (!_editorDelegates.ContainsKey(binder.Name)) 
-                _editorDelegates.Add(binder.Name, new List<Delegate>());
-
-            result = new InputOutputEditorSetters (_editorDelegates[binder.Name]);
+            result = new InputOutputEditorSetters (binder.Name, _editorDelegates, NounResolver);
             return true;
         }
 
-        /// <summary>
+        /// <summary>m
         /// Entry function for everything you can come up with.!
         /// </summary>
         /// <param name="binder"></param>
@@ -96,7 +92,7 @@
         /// </summary>
         /// <param name="functionArguments"></param>
         /// <returns></returns>
-        public Delegate FindInputEditor(IEnumerable<object> functionArguments)
+        private Delegate FindInputEditor(IEnumerable<object> functionArguments)
         {
             return functionArguments.Where (o => o.GetType ().Name == "Func`2").Cast<Delegate> ().FirstOrDefault (d => d.IsInput ());
         }
@@ -107,7 +103,7 @@
         /// </summary>
         /// <param name="functionArguments"></param>
         /// <returns></returns>
-        public Delegate FindOutputEditor (IEnumerable<object> functionArguments)
+        private Delegate FindOutputEditor (IEnumerable<object> functionArguments)
         {
             return functionArguments.Where (o => o.GetType ().Name.Contains("Func")).Cast<Delegate> ().FirstOrDefault (d => d.IsOutput ());
         }
@@ -202,7 +198,7 @@
             if (urlParameters != null && urlParameters.Count() > 0)
                 site = site + "/" + urlParameters.Aggregate((l, r) => l + "/" + r);
 
-            string url = CreateUri(Url, site, queryString);
+            string url = CreateURI(Url, site, queryString);
 
             var wr = WebRequest.Create(url);
             wr.Method = callMethod.ToString();
@@ -234,9 +230,9 @@
             return editor (wr.GetResponse ());
         }
 
-        private string CreateUri(string url, string site, IEnumerable<KeyValuePair<string, string>> queryDict)
+        private static string CreateURI(string url, string site, IEnumerable<KeyValuePair<string, string>> queryDict)
         {
-            var queryString = url + "/" + site;
+            var queryString = (url != null ? url + "/" : "") + site;
             if (queryDict != null && queryDict.Count () > 0)
             {    
                 queryString += "?";
@@ -250,30 +246,37 @@
             }
             return queryString;
         }
-
-        public string Url { get; set; }
     }
 
     public class InputOutputEditorSetters
     {
-        public List<Delegate> EditorDelegates { get; set; }
+        public string BinderName { get; set; }
+        public Dictionary<string, List<Delegate>> EditorDelegates { get; set; }
+        public List<Delegate> CurrentEditorDelegates { get; set; }
+        public INounResolver NounResolver { get; set; }
 
-        public InputOutputEditorSetters (List<Delegate> editorDelegates)
+        public InputOutputEditorSetters (string binderName, Dictionary<string, List<Delegate>> editorDelegates, INounResolver nounResolver)
         {
+            if (!editorDelegates.ContainsKey (binderName))
+                editorDelegates.Add (binderName, new List<Delegate> ());
+
+            BinderName = binderName;
             EditorDelegates = editorDelegates;
+            NounResolver = nounResolver;
+            CurrentEditorDelegates = EditorDelegates[BinderName];
         }
 
         public Delegate In
         {
             get
             {
-                return EditorDelegates.FirstOrDefault(d => d.IsInput());
+                return CurrentEditorDelegates.FirstOrDefault (d => d.IsInput ());
             }
             set
             {
                 if (In != null)
-                    EditorDelegates.Remove(In);
-                EditorDelegates.Add (value);
+                    CurrentEditorDelegates.Remove (In);
+                CurrentEditorDelegates.Add (value);
             }
         }
 
@@ -281,14 +284,26 @@
         {
             get
             {
-                return EditorDelegates.FirstOrDefault (d => d.IsOutput ());
+                return CurrentEditorDelegates.FirstOrDefault (d => d.IsOutput ());
             }
             set
             {
                 if (Out != null)
-                    EditorDelegates.Remove (Out);
-                EditorDelegates.Add (value); 
+                    CurrentEditorDelegates.Remove (Out);
+                CurrentEditorDelegates.Add (value); 
             }
+        }
+
+        public string Url
+        {
+            get { return NounResolver.PredefinedUrls[BinderName]; }
+            set
+            {
+                if (NounResolver.PredefinedUrls.ContainsKey (BinderName))
+                    NounResolver.PredefinedUrls[BinderName] = value;
+                else
+                    NounResolver.PredefinedUrls.Add (BinderName, value);
+            } 
         }
     }
 
