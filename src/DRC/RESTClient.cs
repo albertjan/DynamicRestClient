@@ -237,8 +237,30 @@
             wr.Method = callMethod.ToString();
             if (what != null && (what.Headers != null))
             {
-                foreach (var header in what.Headers) wr.Headers.Add(header.Key, header.Value);
-                wr.ContentType = what.ContentType;
+                foreach (var header in what.Headers)
+                {
+                    switch (header.Key)
+                    {
+                        case "Connection":
+                        case "Host":
+                        case "Content-Length":
+                            //ignore
+                            continue;
+                        case "User-Agent":
+                            ((HttpWebRequest) wr).UserAgent = header.Value;
+                            continue;
+                        case "Content-Type":
+                            wr.ContentType = header.Value;
+                            continue;
+                        case "Accept":
+                            ((HttpWebRequest) wr).Accept = header.Value;
+                            continue;
+                        default:
+                            wr.Headers.Add (header.Key, header.Value);
+                            break;
+                    }
+                }
+                if (String.IsNullOrWhiteSpace(what.ContentType)) wr.ContentType = what.ContentType;
             }
 
             switch (callMethod)
