@@ -19,13 +19,13 @@
             {
                 if (char.IsLower(last) && char.IsUpper(c))
                 {
-                    retval.Add(sb.ToString());
+                    retval.Add(sb.ToString().ToLower());
                     sb.Clear();
                 }
                 sb.Append(c);
                 last = c;
             }
-            retval.Add(sb.ToString());
+            retval.Add(sb.ToString().ToLower());
             CacheDict.Add (input, retval);
             return retval;
         }

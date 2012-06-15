@@ -1,7 +1,4 @@
-﻿using System.Reflection;
-using System.Text;
-
-namespace DRC
+﻿namespace DRC
 {
     using System;
     using System.Collections.Generic;
@@ -9,7 +6,8 @@ namespace DRC
     using System.IO;
     using System.Linq;
     using System.Net;
-    
+    using System.Reflection;
+
     using Defaults;
     using Interfaces;
 
@@ -29,7 +27,7 @@ namespace DRC
     /// During the first call it will determine the deserialization method and type. This will be cached 
     /// while it lives. If it stops working it will try to redetermine the method and types. If it can't 
     /// find the type it will return an expandoObject containing properties coresponding to the name and 
-    /// if known type specified in the message.
+    /// if known type specified in the message. In a perfect world :P it should.
     /// </summary>
     public class RESTClient: DynamicObject 
     {
@@ -138,7 +136,7 @@ namespace DRC
                 OutputEditor = (_editorDelegates.ContainsKey(binderName) &&
                                 _editorDelegates[binderName].FirstOrDefault(d => d.IsOutput()) != null)
                                 ? _editorDelegates[binderName].First(d => d.IsOutput())
-                                : new Func<byte[], byte[]>(b => b)
+                                : new Func<byte[], ClientRequest>(b => new ClientRequest{Body = b})
             };
 
             //if the arguments have and input or output editor use that one.
@@ -170,7 +168,7 @@ namespace DRC
             
             retval.QueryDict = queryDict;
 
-            //outputeditorargumentselection and payload generation
+            //outputeditorargumentselection and payload generation empty request
             if (retval.OutputEditor.GetType().GetGenericArguments().First() == typeof(byte[]))
                 if (argList.FirstOrDefault(o => o is byte[]) == null)
                     argList.Add(new byte[0]);
@@ -195,7 +193,7 @@ namespace DRC
                     sortedArgs.Add(argList.TakeNthOccurence(o=>o.GetType().Name == type, typeOrderDict[outputEditorArgumentsType]));
                 }
 
-                retval.Payload = (byte[])retval.OutputEditor.FastDynamicInvoke (sortedArgs.ToArray ()); /* FastDynamicInvoke wants an
+                retval.Payload = (ClientRequest)retval.OutputEditor.FastDynamicInvoke (sortedArgs.ToArray ()); /* FastDynamicInvoke wants an
                                                                                                          * array */
             }
             catch (Exception ex)
@@ -214,16 +212,21 @@ namespace DRC
             return retval;
         }
         
+// ReSharper disable UnusedMember.Local
         private T GetDeserializationMethod<T>(WebResponse ofT)
         {
-            using (var sr = new StreamReader(ofT.GetResponseStream()))
+            if (ofT.ContentType == "application/json")
             {
-                return SimpleJson.DeserializeObject<T>(sr.ReadToEnd());
+                using (var sr = new StreamReader (ofT.GetResponseStream ()))
+                {
+                    return SimpleJson.DeserializeObject<T> (sr.ReadToEnd ());
+                }    
             }
+            throw new Exception("Can't Deserialise (" + ofT.ContentType + ")");
         }
+// ReSharper restore UnusedMember.Local
 
-
-        public T DoCall<T> (Verb callMethod, string site, IEnumerable<KeyValuePair<string, string>> queryString, Func<WebResponse, T> editor, object[] urlParameters = null, byte[] what = null)
+        public T DoCall<T> (Verb callMethod, string site, IEnumerable<KeyValuePair<string, string>> queryString, Func<WebResponse, T> editor, object[] urlParameters = null, ClientRequest what = null)
         {
             if (urlParameters != null && urlParameters.Count() > 0)
                 site = site + "/" + urlParameters.Aggregate((l, r) => l + "/" + r);
@@ -232,7 +235,12 @@ namespace DRC
 
             var wr = WebRequest.Create(url);
             wr.Method = callMethod.ToString();
-            
+            if (what != null && (what.Headers != null))
+            {
+                foreach (var header in what.Headers) wr.Headers.Add(header.Key, header.Value);
+                wr.ContentType = what.ContentType;
+            }
+
             switch (callMethod)
             {
                 case Verb.GET:
@@ -245,11 +253,11 @@ namespace DRC
                 case Verb.POST:
                     if (what != null)
                     {
-                        wr.ContentLength = what.Length;
-                        if (what.Length > 0)
+                        wr.ContentLength = what.Body.Length;
+                        if (what.Body.Length > 0)
                             using (var sr = new BinaryWriter(wr.GetRequestStream()))
                             {
-                                sr.Write(what);
+                                sr.Write(what.Body);
                                 sr.Flush();
                             }
                     }
@@ -357,12 +365,19 @@ namespace DRC
         public Delegate OutputEditor { get; set;}
         public IEnumerable<KeyValuePair<string,string>> QueryDict { get; set; }
         public object[] UrlParameters { get; set; }
-        public byte[] Payload { get; set; }
+        public ClientRequest Payload { get; set; }
     }
 
     public interface ITypeArguments
     {
         IList<Type> m_typeArguments { get; }
+    }
+
+    public class ClientRequest
+    {
+        public byte[] Body { get; set; }
+        public string ContentType { get; set; }
+        public Dictionary<string,string> Headers { get; set; }
     }
 
     public static class Extensions
@@ -390,7 +405,7 @@ namespace DRC
         public static bool IsOutput (this Delegate outputDelegate)
         {
             return (outputDelegate.GetType ().Name.Contains ("Func") &&
-                    outputDelegate.GetType ().GetGenericArguments ().Last () == typeof (byte[]));
+                    outputDelegate.GetType ().GetGenericArguments ().Last () == typeof (ClientRequest));
         }
 
         public static IEnumerable<T> SkipLastN<T> (this IEnumerable<T> source, int n)

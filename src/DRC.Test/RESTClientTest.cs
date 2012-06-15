@@ -21,9 +21,9 @@
         [Test]
         public void InputAndOutputExtensionsMethodTest()
         {
-            var isOutputDelegate = new Func<string, byte[]>(s => Encoding.UTF8.GetBytes(s));
+            var isOutputDelegate = new Func<string, ClientRequest>(s => new ClientRequest { Body = Encoding.UTF8.GetBytes(s) });
             var isInputDelegate = new Func<WebResponse, string> (s => "test");
-            var inputLikeAction = new Action<string, byte[]>((s, b) => b.ToString());
+            var inputLikeAction = new Action<string, ClientRequest>((s, b) => b.ToString());
             Assert.IsTrue(isInputDelegate.IsInput ());
             Assert.IsFalse(isInputDelegate.IsOutput ());
             Assert.IsTrue(isOutputDelegate.IsOutput ());
@@ -56,7 +56,8 @@
             dynamic me = new RESTClient ();
             //me.GetTest.In = new Func<Stream, int> (s => 1);
             me.GetTest.Out =
-                new Func<int, int, string, long, int, string, string, byte[]>((i1, i2, s1, l1, i3, s2, s3) => new byte[12]);
+                new Func<int, int, string, long, int, string, string, ClientRequest>(
+                    (i1, i2, s1, l1, i3, s2, s3) => new ClientRequest() { Body = new byte[12] });
             me.GetTest (1, 2, "3", (long)4, /* missing5,*/ "6", "7");
         }
 
@@ -162,7 +163,7 @@
             me.Url = "test://base";
             me.GetTest.In = new Func<WebResponse, Stream>(r =>
                                                               {
-                                                                  Assert.AreEqual(new Uri("test://base/Test/param"), r.ResponseUri);
+                                                                  Assert.AreEqual(new Uri("test://base/test/param"), r.ResponseUri);
                                                                   return r.GetResponseStream();
                                                               });
             me.GetTest("param");
@@ -171,7 +172,7 @@
 
             me.GetTest.In = new Func<WebResponse, Stream> (r =>
             {
-                Assert.AreEqual (new Uri ("test://base/Test/param1/param2"), r.ResponseUri);
+                Assert.AreEqual (new Uri ("test://base/test/param1/param2"), r.ResponseUri);
                 return r.GetResponseStream ();
             });
             me.GetTest ("param1", "param2");
@@ -186,7 +187,7 @@
             me.Url = "test://base";
 
             var result = me.GetTest(1, 2, 3, 4, 5, (long) 6, "7", "8", true,
-                       new Func<bool, string, long, string, int, int, int, int, int, byte[]>(
+                       new Func<bool, string, long, string, int, int, int, int, int, ClientRequest>(
                            (a, b, c, d, e, f, g, h, i) => { 
                                Assert.IsTrue (a);
                                Assert.AreEqual (b, "7");
@@ -197,11 +198,11 @@
                                Assert.AreEqual (g, 3);
                                Assert.AreEqual (h, 4);
                                Assert.AreEqual (i, 5);
-                               return new byte[16]; 
+                               return new ClientRequest { Body = new byte[16] }; 
                            }),
                        new Func<WebResponse,WebResponse> (r => r));
-            
-            Assert.AreEqual(result.ResponseUri, new Uri("test://base/Test"));
+
+            Assert.AreEqual (new Uri ("test://base/test"), result.ResponseUri);
         }
 
         [Test]
@@ -219,7 +220,7 @@
                                             /*URLParam*/    
                                             "param",
                                             /*OutputEditor*/
-                                            new Func<int, string, int, string, int, int, byte[]>(
+                                            new Func<int, string, int, string, int, int, ClientRequest>(
                                                 (i1, s1, i2, s2, i3, i4) =>
                                                 {
                                                     Assert.AreEqual (i1, 1);
@@ -228,14 +229,14 @@
                                                     Assert.AreEqual (s2, "6");
                                                     Assert.AreEqual (i3, 3);
                                                     Assert.AreEqual (i4, 4);
-                                                    return new byte[16];
+                                                    return new ClientRequest { Body = new byte[16] };
                                                 }),
                                             /*InputEditor*/
                                             new Func<WebResponse, string>(w =>
                                             {
                                                 Assert.AreEqual(w.ResponseUri,
                                                                 new Uri(
-                                                                    "test://base/Test/param?page=1&items=50"));
+                                                                    "test://base/test/param?page=1&items=50"));
                                                 using (var sr = new StreamReader(w.GetResponseStream()))
                                                     return sr.ReadToEnd();
                                             }));
@@ -248,7 +249,7 @@
             var request = TestWebRequestCreate.CreateTestRequest("");
             dynamic me = new RESTClient ();
             me.Url = "test://base";
-            me.PutTest.Out = new Func<int, byte[]>(BitConverter.GetBytes);
+            me.PutTest.Out = new Func<int, ClientRequest>(i => new ClientRequest { Body = BitConverter.GetBytes(i) });
             me.PutTest(1);
             Assert.AreEqual(BitConverter.ToInt32(((MemoryStream)request.GetRequestStream()).ToArray(),0),1);
         }
@@ -262,7 +263,7 @@
             me.Url = "test://base";
             me.GetMultipleNounTest.In = new Func<WebResponse, string>(w =>
             {
-                Assert.AreEqual(new Uri("test://base/Multiple/Noun/Test"), w.ResponseUri);
+                Assert.AreEqual(new Uri("test://base/multiple/noun/test"), w.ResponseUri);
                 return "yes";
             });
             me.GetMultipleNounsTest();
@@ -335,7 +336,7 @@
         [Test]
         public void ShouldTryToDeserializeToGenericTypeArgument()
         {
-            var test = TestWebRequestCreate.CreateTestRequest (SimpleJson.SerializeObject(new AModel{ D =0.1, I =1, L =2, S ="s"}));
+            var test = TestWebRequestCreate.CreateTestRequest (SimpleJson.SerializeObject(new AModel{ D = 0.1, I = 1, L = 2, S = "s"}));
             test.ContentType = "application/json";
             dynamic me = new RESTClient ();
             me.Url = "test://test";
@@ -451,7 +452,7 @@
         /// <summary>See <see cref="WebRequest.GetResponse"/>.</summary>
         public override WebResponse GetResponse ()
         {
-            return new TestWebReponse (responseStream, RequestUri);
+            return new TestWebReponse (responseStream, RequestUri, ContentType);
         }
     }
 
@@ -459,12 +460,25 @@
     {
         Stream responseStream;
         private Uri requestUri;
+        private string _contentType;
 
         public override Uri ResponseUri
         {
             get
             {
                 return requestUri;
+            }
+        }
+
+        public override string ContentType
+        {
+            get
+            {
+                return _contentType;
+            }
+            set
+            {
+                _contentType = value;
             }
         }
 
@@ -477,9 +491,10 @@
 
         /// <summary>Initializes a new instance of <see cref="TestWebReponse"/>
         /// with the response stream to return.</summary>
-        public TestWebReponse (Stream responseStream, Uri uri)
+        public TestWebReponse (Stream responseStream, Uri uri, string contentType = null)
         {
             this.requestUri = uri;
+            _contentType = contentType;
             this.responseStream = responseStream;
         }
 
