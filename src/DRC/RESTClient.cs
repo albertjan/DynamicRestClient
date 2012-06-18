@@ -244,7 +244,6 @@
                         case "Connection":
                         case "Host":
                         case "Content-Length":
-                            //ignore
                             continue;
                         case "User-Agent":
                             ((HttpWebRequest) wr).UserAgent = header.Value;
@@ -260,7 +259,13 @@
                             break;
                     }
                 }
-                if (String.IsNullOrWhiteSpace(what.ContentType)) wr.ContentType = what.ContentType;
+                if (!String.IsNullOrWhiteSpace(what.ContentType)) wr.ContentType = what.ContentType;
+            }
+
+            //call output pipelinebefore writing body (httpwebrequest will send the body immediatly
+            foreach (var pipelineItem in OutputPipeLine.OrderBy (p => p.Key))
+            {
+                pipelineItem.Value.Item2 (wr);
             }
 
             switch (callMethod)
@@ -287,13 +292,12 @@
                 default:
                     throw new ArgumentOutOfRangeException("callMethod");
             }
-            
-            foreach (var pipelineItem in OutputPipeLine.OrderBy(p => p.Key))
-            {
-                pipelineItem.Value.Item2(wr);
-            }
-            
-            var resp = wr.GetResponse();
+            WebResponse resp = null;
+
+            //swallow stupid exceptions!!
+            // ReSharper disable EmptyGeneralCatchClause
+            try { resp = wr.GetResponse(); }catch(Exception){}
+            // ReSharper restore EmptyGeneralCatchClause
 
             foreach (var pipelineItem in InputPipeLine.OrderBy(p=> p.Key))
             {
