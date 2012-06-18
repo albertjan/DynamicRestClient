@@ -10,6 +10,8 @@
 .DS_Store
 deploy/
 build/
+lib/
+*.nupkg
 [Bb]in/
 [Dd]ebug/
 [Oo]bj/
