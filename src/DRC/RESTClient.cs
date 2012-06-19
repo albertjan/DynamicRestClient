@@ -242,8 +242,35 @@
                     switch (header.Key)
                     {
                         case "Connection":
-                        case "Host":
                         case "Content-Length":
+                            continue;
+                        case "Expect":
+                            ((HttpWebRequest)wr).Expect = header.Value;
+                            continue;
+                        case "Date":
+                            //((HttpWebRequest)wr).Date = header.Value;
+                            //should do some parsing here.
+                            continue;
+                        case "If-Modified-Since":
+                            //((HttpWebRequest)wr).IfModifiedSince = header.Value;
+                            //again with the parsing
+                            continue;
+                        case "Range":
+                            //((HttpWebRequest)wr).AddRange() = header.Value;
+                            //needs more impl.
+                            continue;
+                        case "Referer":
+                            ((HttpWebRequest)wr).Referer = header.Value;
+                            continue;
+                        case "Transfer-Encoding":
+                            if (String.Equals(header.Value, "chucked", StringComparison.OrdinalIgnoreCase))
+                                ((HttpWebRequest)wr).SendChunked = true;
+                            
+                            //ignore others.
+                            //((HttpWebRequest)wr).TransferEncoding = header.Value;
+                            continue;
+                        case "Host":
+                            ((HttpWebRequest)wr).Host = header.Value;
                             continue;
                         case "User-Agent":
                             ((HttpWebRequest) wr).UserAgent = header.Value;
