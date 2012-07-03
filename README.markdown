@@ -11,13 +11,8 @@ dynamic me = new RESTClient ();
 //Set the url 
 me.Url = "http://someapi.com";
 
-//Set an input editor for the /things route
-me.GetThings.In = new Func<WebResponse, IEnumerable<Thing>> ( wr => {
-	//fictive you'd have to import your own json deserializer atm.
-	return JSON.Deserialize<IEnumerable<Thing>>(wr.GetResponseStream());
-});
-
-var things = (IEnumerable<Thing>)client.GetThings();
+//Get Things!
+var things = (IEnumerable<Thing>)client.GetThings<IEnumerable<Thing>>();
 ```
 
 ImpromptuInterface lets you do this:
