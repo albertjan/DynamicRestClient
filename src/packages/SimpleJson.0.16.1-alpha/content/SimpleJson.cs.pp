@@ -58,9 +58,9 @@ using System.Reflection.Emit;
 using System.Runtime.Serialization;
 #endif
 using System.Text;
-using DRC.Reflection;
+using $rootnamespace$.Reflection;
 
-namespace DRC
+namespace $rootnamespace$
 {
     #region JsonArray
 
@@ -469,7 +469,7 @@ namespace DRC
     #endregion
 }
 
-namespace DRC
+namespace $rootnamespace$
 {
     #region JsonParser
 

@@ -1,3 +1,73 @@
+# SimpleJson https://github.com/facebook-csharp-sdk/simple-json
+# License: MIT License
+# Version: 0.16.1-alpha
+
+function ConvertFrom-Json
+{
+    param(
+        [Switch] $AsPSObject,
+        [Parameter(Mandatory=$true,ValueFromPipeline=$true)][String]$json
+    )
+    
+    $obj= [SimpleJson.SimpleJson]::DeserializeObject($json)
+    
+    if($AsPSObject)
+    {
+        $obj = ConvertJsonObjectToPsObject($obj)
+    }
+    
+    return $obj
+}
+
+function ConvertTo-Json
+{
+    param(
+        [object][Parameter(Mandatory=$true,ValueFromPipeline=$true)] $obj
+    )
+    
+    return [SimpleJson.SimpleJson]::SerializeObject($obj)
+}
+
+function ConvertJsonObjectToPsObject
+{
+    param(
+        [Object] $obj
+    )
+    
+    if($obj -eq $null)
+    {
+        return $null
+    }
+    if($obj -is [System.Collections.Generic.IDictionary[string,object]])
+    {
+        $hash = @{}
+        foreach($kvp in $obj)
+        {
+            $hash[$kvp.Key] = ConvertJsonObjectToPsObject($kvp.Value)
+        }
+        
+        return $hash
+    }
+    if($obj -is [system.collections.generic.list[object]])
+    {
+        $arr = New-Object object[] $obj.Count
+        
+        for ( $i = 0; $i -lt $obj.count; $i++ )
+        { 
+            $arr[$i] = ConvertJsonObjectToPsObject($obj[$i])
+        }
+        
+        return $arr
+    }
+    
+    return  $obj
+}
+
+$source = @"
+
+#define SIMPLE_JSON_DATACONTRACT
+#define SIMPLE_JSON_REFLECTIONEMIT
+
 //-----------------------------------------------------------------------
 // <copyright file="SimpleJson.cs" company="The Outercurve Foundation">
 //    Copyright (c) 2011, The Outercurve Foundation.
@@ -16,6 +86,8 @@
 // <author>Nathan Totten (ntotten.com), Jim Zimmerman (jimzimmerman.com) and Prabir Shrestha (prabir.me)</author>
 // <website>https://github.com/facebook-csharp-sdk/simple-json</website>
 //-----------------------------------------------------------------------
+
+// VERSION: 0.16.1-alpha
 
 // NOTE: uncomment the following line to make SimpleJson class internal.
 //#define SIMPLE_JSON_INTERNAL
@@ -56,9 +128,9 @@ using System.Reflection.Emit;
 using System.Runtime.Serialization;
 #endif
 using System.Text;
-using $rootnamespace$.Reflection;
+using SimpleJson.Reflection;
 
-namespace $rootnamespace$
+namespace SimpleJson
 {
     #region JsonArray
 
@@ -467,7 +539,7 @@ namespace $rootnamespace$
     #endregion
 }
 
-namespace $rootnamespace$
+namespace SimpleJson
 {
     #region JsonParser
 
@@ -1317,10 +1389,25 @@ namespace $rootnamespace$
             if (value is string)
             {
                 string str = value as string;
-                if(!string.IsNullOrEmpty(str) && (type == typeof(DateTime) || (ReflectionUtils.IsNullableType(type) && Nullable.GetUnderlyingType(type) == typeof(DateTime)) ))
-                     obj = DateTime.ParseExact(str, Iso8601Format, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal);
+
+                if (!string.IsNullOrEmpty(str))
+                {
+                    if (type == typeof(DateTime) || (ReflectionUtils.IsNullableType(type) && Nullable.GetUnderlyingType(type) == typeof(DateTime)))
+                        obj = DateTime.ParseExact(str, Iso8601Format, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal);
+                    else if (type == typeof(Guid) || (ReflectionUtils.IsNullableType(type) && Nullable.GetUnderlyingType(type) == typeof(Guid)))
+                        obj = new Guid(str);
+                    else
+                        obj = str;
+                }
                 else
-                    obj = str;
+                {
+                    if (type == typeof(Guid))
+                        obj= default(Guid);
+                    else if(ReflectionUtils.IsNullableType(type) && Nullable.GetUnderlyingType(type) == typeof(Guid))
+                        obj = null;
+                    else
+                        obj = str;                    
+                }
             }
             else if (value is bool)
                 obj = value;
@@ -1342,7 +1429,7 @@ namespace $rootnamespace$
             {
                 if (value is IDictionary<string, object>)
                 {
-                    IDictionary<string, object> jsonObject = (IDictionary<string, object>) value;
+                    IDictionary<string, object> jsonObject = (IDictionary<string, object>)value;
 
                     if (ReflectionUtils.IsTypeDictionary(type))
                     {
@@ -1355,12 +1442,12 @@ namespace $rootnamespace$
                         Type valueType = type.GetGenericArguments()[1];
 #endif
 
-                        Type genericType = typeof (Dictionary<,>).MakeGenericType(keyType, valueType);
+                        Type genericType = typeof(Dictionary<,>).MakeGenericType(keyType, valueType);
 
 #if NETFX_CORE
                     dynamic dict = CacheResolver.GetNewInstance(genericType);
 #else
-                        IDictionary dict = (IDictionary) CacheResolver.GetNewInstance(genericType);
+                        IDictionary dict = (IDictionary)CacheResolver.GetNewInstance(genericType);
 #endif
                         foreach (KeyValuePair<string, object> kvp in jsonObject)
                         {
@@ -1398,12 +1485,12 @@ namespace $rootnamespace$
                 }
                 else if (value is IList<object>)
                 {
-                    IList<object> jsonObject = (IList<object>) value;
+                    IList<object> jsonObject = (IList<object>)value;
                     IList list = null;
 
                     if (type.IsArray)
                     {
-                        list = (IList) Activator.CreateInstance(type, jsonObject.Count);
+                        list = (IList)Activator.CreateInstance(type, jsonObject.Count);
                         int i = 0;
                         foreach (object o in jsonObject)
                             list[i++] = DeserializeObject(o, type.GetElementType());
@@ -1412,17 +1499,17 @@ namespace $rootnamespace$
 #if NETFX_CORE
  typeof(IList).GetTypeInfo().IsAssignableFrom(type.GetTypeInfo())
 #else
-                             typeof (IList).IsAssignableFrom(type)
+ typeof(IList).IsAssignableFrom(type)
 #endif
-                        )
+)
                     {
 #if NETFX_CORE
                     Type innerType = type.GetTypeInfo().GenericTypeArguments[0];
 #else
                         Type innerType = type.GetGenericArguments()[0];
 #endif
-                        Type genericType = typeof (List<>).MakeGenericType(innerType);
-                        list = (IList) CacheResolver.GetNewInstance(genericType);
+                        Type genericType = typeof(List<>).MakeGenericType(innerType);
+                        list = (IList)CacheResolver.GetNewInstance(genericType);
                         foreach (object o in jsonObject)
                             list.Add(DeserializeObject(o, innerType));
                     }
@@ -1435,6 +1522,12 @@ namespace $rootnamespace$
 
             if (ReflectionUtils.IsNullableType(type))
                 return ReflectionUtils.ToNullableType(obj, type);
+
+            if (obj == null)
+            {
+                if (type == typeof(Guid))
+                    return default(Guid);
+            }
 
             return obj;
         }
@@ -1632,9 +1725,9 @@ namespace $rootnamespace$
 #if NETFX_CORE
                     type.GetTypeInfo().IsGenericType
 #else
-                    type.IsGenericType
+ type.IsGenericType
 #endif
-                && type.GetGenericTypeDefinition() == typeof(Nullable<>);
+ && type.GetGenericTypeDefinition() == typeof(Nullable<>);
             }
 
             public static object ToNullableType(object obj, Type nullableType)
@@ -1919,3 +2012,7 @@ namespace $rootnamespace$
 
     #endregion
 }
+"@
+Export-ModuleMember ConvertFrom-Json
+Export-ModuleMember ConvertTo-Json
+Add-Type -ReferencedAssemblies System.Runtime.Serialization -TypeDefinition $source -Language CSharp

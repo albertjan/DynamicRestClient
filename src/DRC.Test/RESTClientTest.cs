@@ -343,6 +343,17 @@
             var a = me.GetTest<AModel> ();
             Assert.AreEqual(typeof(AModel), a.GetType());
         }
+
+        [Test]
+        public void ShouldBeAbleToDeserializeAGuid()
+        {
+            var test = TestWebRequestCreate.CreateTestRequest ("\"378eb2ddc6d4461b9b4cf77ef0098daf\"");
+            test.ContentType = "application/json";
+            dynamic me = new RESTClient ();
+            me.Url = "test://test";
+            var a = me.GetTest<Guid> ();
+            Assert.AreEqual (typeof (Guid), a.GetType ());
+        }
     }
 
     class AModel
