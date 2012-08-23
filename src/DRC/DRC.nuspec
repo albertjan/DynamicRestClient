@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>DRC</id>
-    <version>0.0.0.3</version>
+    <version>0.0.0.4</version>
     <title>A Dynamic REST Client</title>
     <authors>Albert-Jan Nijburg</authors>
     <owners>Albert-Jan Nijburg</owners>
@@ -10,11 +10,11 @@
     <projectUrl>https://github.com/albertjan/DynamicRestClient</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>A Client for calling RESTFull API's without writing tomuch fluf.</description>
-    <releaseNotes>Added SimpleJson for serialisation and deserialisation purposes. Automatically deserialises JSON if a generic argument is given in the function call. Added a request object giving the user the ability to specify contenttype and headers. Made the default string tokenizer output lowercase tokens. Added capability to specify a specific Url per function call. Added Output and Input Pipelines for editing the request and response before it goes into the In and Output editors.</releaseNotes>
+    <releaseNotes>Updated dependent packages. Fixes not being able to parse Guids. Added a test for that aswell.</releaseNotes>
     <copyright>Copyright Albert-Jan Nijburg 2012</copyright>
     <tags>DRC REST http</tags>
     <dependencies>
-      <dependency id="ImpromptuInterface" version="5.6.7" />
+      <dependency id="ImpromptuInterface" version="6.0.6" />
     </dependencies>
   </metadata>
 </package>
