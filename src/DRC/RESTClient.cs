@@ -7,6 +7,7 @@
     using System.Linq;
     using System.Net;
     using System.Reflection;
+    using System.Xml.Serialization;
 
     using Defaults;
     using Interfaces;
@@ -222,6 +223,12 @@
                     return SimpleJson.DeserializeObject<T> (sr.ReadToEnd ());
                 }    
             }
+
+            if (ofT.ContentType == "application/xml")
+            {
+                return (T) new XmlSerializer (typeof (T)).Deserialize (ofT.GetResponseStream ());
+            }
+            
             throw new Exception("Can't Deserialise (" + ofT.ContentType + ")");
         }
 // ReSharper restore UnusedMember.Local
