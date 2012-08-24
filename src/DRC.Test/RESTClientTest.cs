@@ -1,14 +1,15 @@
-﻿using System.Xml.Serialization;
-
-namespace DRC.Test
+﻿namespace DRC.Test
 {
     using System;
     using System.IO;
     using System.Net;
     using System.Text;
+    using System.Xml.Serialization;
+
     using DRC;
     using DRC.Defaults;
     using DRC.Interfaces;
+    
     using NUnit.Framework;
 
     [TestFixture]
