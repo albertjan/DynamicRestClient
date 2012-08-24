@@ -1,4 +1,6 @@
-﻿namespace DRC.Test
+﻿using System.Xml.Serialization;
+
+namespace DRC.Test
 {
     using System;
     using System.IO;
@@ -334,7 +336,7 @@
         }
 
         [Test]
-        public void ShouldTryToDeserializeToGenericTypeArgument()
+        public void ShouldTryToDeserializeJsonToGenericTypeArgument()
         {
             var test = TestWebRequestCreate.CreateTestRequest (SimpleJson.SerializeObject(new AModel{ D = 0.1, I = 1, L = 2, S = "s"}));
             test.ContentType = "application/json";
@@ -343,6 +345,30 @@
             var a = me.GetTest<AModel> ();
             Assert.AreEqual(typeof(AModel), a.GetType());
         }
+
+        [Test]
+        public void ShouldTryToDeserializeXMLToGenericTypeArgument ()
+        {
+            string xml;
+            using (var ms = new MemoryStream())
+            using (var sw = new StreamWriter(ms))
+            {
+                new XmlSerializer(typeof (AModel)).Serialize(sw, new AModel {D = 0.1, I = 1, L = 2, S = "s"});
+                sw.Flush();
+                ms.Position = 0;
+                using (var sr = new StreamReader(ms))
+                {
+                    xml = sr.ReadToEnd();
+                }
+            }
+            var test = TestWebRequestCreate.CreateTestRequest (xml);
+            test.ContentType = "application/xml";
+            dynamic me = new RESTClient ();
+            me.Url = "test://test";
+            var a = me.GetTest<AModel> ();
+            Assert.AreEqual (typeof (AModel), a.GetType ());
+        }
+
 
         [Test]
         public void ShouldBeAbleToDeserializeAGuid()
@@ -354,9 +380,20 @@
             var a = me.GetTest<Guid> ();
             Assert.AreEqual (typeof (Guid), a.GetType ());
         }
+
+        [Test]
+        public void ShouldBeAbleToDeserializeADateTime ()
+        {
+            var test = TestWebRequestCreate.CreateTestRequest ("\"/Date(1307871513107+0700)/\"");
+            test.ContentType = "application/json";
+            dynamic me = new RESTClient ();
+            me.Url = "test://test";
+            var a = me.GetTest<DateTime> ();
+            Assert.AreEqual (typeof (DateTime), a.GetType ());
+        }
     }
 
-    class AModel
+    public class AModel
     {
         public int I { get; set; }
         public string S { get; set; }
