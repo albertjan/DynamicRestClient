@@ -35,11 +35,18 @@ var things = client.GetThings();
 
 Isn't it cute. More to come see the tests for more usages. 
 
+##Recently added##
+
+* Automatic xml deserialisation to the generic function argument type if the contenttype is `application/xml`.
+* Support for single noun function calls `client.Resolve("id");` will result in a GET /resolve/id
+* Uri composition adjustable by Implementing `IUriComposer` and passing it to the RestClient's constructor
+* Serialisation of .net json dates `/Date(millisecs-since-epoch)/` hacked into SimpleJson.
+
 ## To-do's ##
 
 * Write more documentation
 * Get feedback
-* Content Negotiation + Deserialisation (json, xml, protocol-buggers)
+* Content Negotiation + Deserialisation (protocol-buggers)
 * XML->dynamic and JSON->dynamic should be shipped with DRC
 * Glue things together with TinyIOC.
 * Maybe loose the ImpromtuInterface ref
