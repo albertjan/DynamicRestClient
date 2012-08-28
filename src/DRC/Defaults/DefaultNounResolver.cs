@@ -18,7 +18,13 @@ namespace DRC.Defaults
 
         public string ResolveNoun(string naaca)
         {
-            return PredefinedUrls.ContainsKey(naaca) ? PredefinedUrls[naaca] : Tokenizer.GetTokens (naaca).Skip(1).Aggregate((s1, s2) => s1 + "/" + s2);
+            if (PredefinedUrls.ContainsKey(naaca)) return PredefinedUrls[naaca];
+            
+            var tokens = Tokenizer.GetTokens (naaca).ToList();
+            
+            return tokens.Count > 1
+                       ? tokens.Skip(1).Aggregate((s1, s2) => s1 + "/" + s2)
+                       : (tokens.Count == 1 ? tokens[0] : "");
         }
     }
 }

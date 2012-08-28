@@ -1,15 +1,17 @@
 ﻿namespace DRC.Test
 {
     using System;
+    using System.Collections.Generic;
     using System.IO;
+    using System.Linq;
     using System.Net;
     using System.Text;
     using System.Xml.Serialization;
-
+   
     using DRC;
     using DRC.Defaults;
     using DRC.Interfaces;
-    
+   
     using NUnit.Framework;
 
     [TestFixture]
@@ -19,6 +21,7 @@
         public void Init()
         {
             WebRequest.RegisterPrefix("test", new TestWebRequestCreate());
+            var alternativeUriComposer = new AlternativeUriComposer();
         }
 
         [Test]
@@ -406,7 +409,25 @@
         [Test]
         public void ShouldBeAbleToChangeTheWayURLsAreBuiltUp()
         {
-            
+            TestWebRequestCreate.CreateTestRequest ("dummy");
+
+            dynamic me = new RESTClient (null, null, null, null, new AlternativeUriComposer());
+            me.Url = "test://base";
+            me.GetTest.In = new Func<WebResponse, Stream> (r =>
+            {
+                Assert.AreEqual (new Uri ("test://base/test/param/"), r.ResponseUri);
+                return r.GetResponseStream ();
+            });
+            me.GetTest ("param");
+
+            TestWebRequestCreate.CreateTestRequest ("dummy");
+
+            me.GetTest.In = new Func<WebResponse, Stream> (r =>
+            {
+                Assert.AreEqual (new Uri ("test://base/test/param1/param2/"), r.ResponseUri);
+                return r.GetResponseStream ();
+            });
+            me.GetTest ("param1", "param2");
         }
 
         [Test]
@@ -422,6 +443,44 @@
                 return "yes";
             });
             me.Noun ();
+            Assert.AreEqual ("GET", request.Method);
+        }
+    }
+
+
+    /// <summary>
+    /// adds a slash after the functionparamters
+    /// client.GetNoun("test") will defaultly resolve to GET /noun/test
+    /// this composer will make 
+    /// GET /noun/test/
+    /// </summary>
+    public class AlternativeUriComposer : IUriComposer
+    {
+        public string ComposeUri(string baseUri, string location, object[] functionParameters, IEnumerable<KeyValuePair<string, string>> queryDictionary)
+        {
+            //Part 1 the basics http://thing.com/base/ + the nouns "/test"
+            var part1 = (baseUri != null ? baseUri + "/" : "") + location;
+            //Part 2 the parameters passed to the function call that aren't needed for the
+            //output editor.
+            var part2 = functionParameters == null || functionParameters.Count() == 0
+                            ? ""
+                            : "/" + functionParameters.Aggregate((l, r) => l + "/" + r) + "/";
+            //Part 3 the querystring
+            var part3 = ""; 
+            
+            if (queryDictionary != null && queryDictionary.Count () > 0)
+            {    
+                part3 += "?";
+                foreach (var element in queryDictionary)
+                {
+                    if (element.Equals (queryDictionary.Last ()))
+                        part3 += element.Key + "=" + element.Value;
+                    else
+                        part3 += element.Key + "=" + element.Value + "&";
+                }
+            }
+               
+            return part1 + part2 + part3;
         }
     }
 
