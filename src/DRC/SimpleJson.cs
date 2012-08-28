@@ -1328,14 +1328,13 @@ namespace DRC
                 {
                     if (type == typeof (DateTime) || (ReflectionUtils.IsNullableType (type) && Nullable.GetUnderlyingType (type) == typeof (DateTime)))
                     {
-                        Match match = DateSerializationRegex.Match (str);
+                        var match = DateSerializationRegex.Match (str);
 
                         if (match.Success)
-                        {
-                            obj = new DateTime(Date1970Ticks + long.Parse(match.Groups["ticks"].Value)*10000, DateTimeKind.Utc).ToLocalTime();
-                        }
+                            obj = new DateTime(Date1970Ticks + long.Parse(match.Groups["ticks"].Value)*10000,
+                                             DateTimeKind.Utc).ToLocalTime();
                         else
-                            obj = DateTime.ParseExact (str, Iso8601Format, CultureInfo.InvariantCulture,
+                            obj = DateTime.ParseExact(str, Iso8601Format, CultureInfo.InvariantCulture,
                                                       DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal);
                     }
                     else if (type == typeof (Guid) || (ReflectionUtils.IsNullableType (type) && Nullable.GetUnderlyingType (type) == typeof (Guid)))

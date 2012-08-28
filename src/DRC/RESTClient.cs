@@ -38,17 +38,20 @@
         public IQueryStringResolver QueryStringResolver { get; set; }
         public IVerbResolver VerbResolver { get; set; }
         public IStringTokenizer StringTokenizer { get; set; }
+        public IUriComposer UriComposer { get; set; }
         public string Url { get; set; }
 
         public RESTClient(INounResolver nounResolver = null, 
             IQueryStringResolver queryStringResolver = null,
             IVerbResolver verbResolver = null,
-            IStringTokenizer stringTokenizer = null)
+            IStringTokenizer stringTokenizer = null,
+            IUriComposer uriComposer = null)
         {
             StringTokenizer = stringTokenizer ?? new DefaultCachedStringTokenizer ();
             NounResolver = nounResolver ?? new DefaultNounResolver (StringTokenizer);
             QueryStringResolver = queryStringResolver ?? new DefaultQueryStringResolver(StringTokenizer);
             VerbResolver = verbResolver ?? new DefaultVerbResolver(StringTokenizer);
+            UriComposer = uriComposer ?? new DefaultUriComposer();
 
             InputPipeLine = new Dictionary<double, Tuple<string, Action<WebResponse>>>();
             OutputPipeLine = new Dictionary<double, Tuple<string, Action<WebRequest>>>();
@@ -235,12 +238,7 @@
 
         public T DoCall<T> (Verb callMethod, string site, IEnumerable<KeyValuePair<string, string>> queryString, Func<WebResponse, T> editor, object[] urlParameters = null, ClientRequest what = null)
         {
-            if (urlParameters != null && urlParameters.Count() > 0)
-                site = site + "/" + urlParameters.Aggregate((l, r) => l + "/" + r);
-
-            string url = CreateURI(Url, site, queryString);
-
-            var wr = WebRequest.Create(url);
+            var wr = WebRequest.Create (UriComposer.ComposeUri (Url, site, urlParameters, queryString));
             wr.Method = callMethod.ToString();
             if (what != null && (what.Headers != null))
             {
@@ -339,23 +337,6 @@
             }
 
             return editor (resp);
-        }
-
-        private static string CreateURI(string url, string site, IEnumerable<KeyValuePair<string, string>> queryDict)
-        {
-            var queryString = (url != null ? url + "/" : "") + site;
-            if (queryDict != null && queryDict.Count () > 0)
-            {    
-                queryString += "?";
-                foreach (var element in queryDict)
-                {
-                    if (element.Equals(queryDict.Last()))
-                        queryString += element.Key + "=" + element.Value;
-                    else
-                        queryString += element.Key + "=" + element.Value + "&";
-                }
-            }
-            return queryString;
         }
     }
 

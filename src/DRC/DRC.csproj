@@ -51,10 +51,12 @@
     <Compile Include="Defaults\DefaultNounResolver.cs" />
     <Compile Include="Defaults\DefaultQueryStringResolver.cs" />
     <Compile Include="Defaults\DefaultCachedStringTokenizer.cs" />
+    <Compile Include="Defaults\DefaultUriComposer.cs" />
     <Compile Include="Defaults\DefaultVerbResolver.cs" />
     <Compile Include="Interfaces\INounResolver.cs" />
     <Compile Include="Interfaces\IQueryStringResolver.cs" />
     <Compile Include="Interfaces\IStringTokenizer.cs" />
+    <Compile Include="Interfaces\IURIComposer.cs" />
     <Compile Include="Interfaces\IVerbResolver.cs" />
     <Compile Include="Interfaces\Verb.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
