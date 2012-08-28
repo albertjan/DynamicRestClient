@@ -58,6 +58,7 @@ using System.Reflection.Emit;
 using System.Runtime.Serialization;
 #endif
 using System.Text;
+using System.Text.RegularExpressions;
 using DRC.Reflection;
 
 namespace DRC
@@ -1270,6 +1271,9 @@ namespace DRC
 #endif
  class PocoJsonSerializerStrategy : IJsonSerializerStrategy
     {
+        private static readonly long Date1970Ticks = new DateTime (1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc).Ticks;
+        private static readonly Regex DateSerializationRegex = new Regex (@"[\\/]+Date\((?<ticks>\d+)(?<direction>[-+]?)(?<offset>\d+)\)[\\/]+", RegexOptions.Compiled);
+
         internal CacheResolver CacheResolver;
 
         private static readonly string[] Iso8601Format = new string[]
@@ -1322,10 +1326,20 @@ namespace DRC
 
                 if (!string.IsNullOrEmpty(str))
                 {
-                    if (type == typeof(DateTime) || (ReflectionUtils.IsNullableType(type) && Nullable.GetUnderlyingType(type) == typeof(DateTime)))
-                        obj = DateTime.ParseExact(str, Iso8601Format, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal);
-                    else if (type == typeof(Guid) || (ReflectionUtils.IsNullableType(type) && Nullable.GetUnderlyingType(type) == typeof(Guid)))
-                        obj = new Guid(str);
+                    if (type == typeof (DateTime) || (ReflectionUtils.IsNullableType (type) && Nullable.GetUnderlyingType (type) == typeof (DateTime)))
+                    {
+                        Match match = DateSerializationRegex.Match (str);
+
+                        if (match.Success)
+                        {
+                            obj = new DateTime(Date1970Ticks + long.Parse(match.Groups["ticks"].Value)*10000, DateTimeKind.Utc).ToLocalTime();
+                        }
+                        else
+                            obj = DateTime.ParseExact (str, Iso8601Format, CultureInfo.InvariantCulture,
+                                                      DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal);
+                    }
+                    else if (type == typeof (Guid) || (ReflectionUtils.IsNullableType (type) && Nullable.GetUnderlyingType (type) == typeof (Guid)))
+                        obj = new Guid (str);
                     else
                         obj = str;
                 }
