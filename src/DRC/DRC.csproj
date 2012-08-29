@@ -64,6 +64,7 @@
     <Compile Include="SimpleJson.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="DRC.nuspec" />
     <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

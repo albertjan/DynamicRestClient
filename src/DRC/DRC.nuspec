@@ -9,7 +9,7 @@
     <licenseUrl>https://github.com/albertjan/DynamicRestClient/blob/master/license.txt</licenseUrl>
     <projectUrl>https://github.com/albertjan/DynamicRestClient</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <description>A Client for calling RESTFull API's without writing tomuch fluf.</description>
+    <description>A Client for calling RESTFull API's without writing too much fluf.</description>
     <releaseNotes>Added support for .net json dates. Added capability to control the way uri's are built. Added support for single noun function calls. Added support for automatic deserialisation of xml.</releaseNotes>
     <copyright>Copyright Albert-Jan Nijburg 2012</copyright>
     <tags>DRC REST http</tags>
