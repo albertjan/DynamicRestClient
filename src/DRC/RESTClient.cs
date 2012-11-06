@@ -217,7 +217,7 @@
         }
         
 // ReSharper disable UnusedMember.Local
-        private T GetDeserializationMethod<T>(WebResponse ofT)
+        private T GetDeserializationMethod<T>(WebResponse ofT) where T : class
         {
             if (ofT.ContentType == "application/json")
             {
@@ -225,11 +225,17 @@
                 {
                     return SimpleJson.DeserializeObject<T> (sr.ReadToEnd ());
                 }    
-            }
-
+            } 
+            
             if (ofT.ContentType == "application/xml")
             {
                 return (T) new XmlSerializer (typeof (T)).Deserialize (ofT.GetResponseStream ());
+            } 
+
+            if (typeof(T) == typeof(string))
+            {
+                using (var sr = new StreamReader(ofT.GetResponseStream()))
+                    return sr.ReadToEnd() as T;
             }
             
             throw new Exception("Can't Deserialise (" + ofT.ContentType + ")");
