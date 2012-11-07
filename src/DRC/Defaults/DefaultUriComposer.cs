@@ -10,7 +10,15 @@
         public string ComposeUri(string baseUri, string location, object[] functionParameters, IEnumerable<KeyValuePair<string, string>> queryDictionary)
         {
             //Part 1 the basics http://thing.com/base/ + the nouns "/test"
-            var part1 = (baseUri != null ? baseUri + "/" : "") + location;
+            string part1;
+            if (location.StartsWith("http"))
+            {
+                part1 = location;
+            }
+            else
+            {
+                part1 = (baseUri != null ? baseUri + "/" : "") + location;
+            }
             //Part 2 the parameters passed to the function call that aren't needed for the
             //output editor.
             var part2 = functionParameters == null || functionParameters.Count() == 0

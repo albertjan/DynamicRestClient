@@ -334,7 +334,13 @@
 
             //swallow stupid exceptions!!
             // ReSharper disable EmptyGeneralCatchClause
-            try { resp = wr.GetResponse(); }catch(Exception){}
+            try
+            {
+                resp = wr.GetResponse();
+            }catch(WebException e)
+            {
+                resp = e.Response;
+            }
             // ReSharper restore EmptyGeneralCatchClause
 
             foreach (var pipelineItem in InputPipeLine.OrderBy(p=> p.Key))
