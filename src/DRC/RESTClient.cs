@@ -8,6 +8,8 @@
     using System.Net;
     using System.Reflection;
     using System.Xml.Serialization;
+    using System.Security.Cryptography;
+    using System.Security.Cryptography.X509Certificates;
 
     using Defaults;
     using Interfaces;
@@ -41,6 +43,8 @@
         public IUriComposer UriComposer { get; set; }
         public string Url { get; set; }
 
+
+
         public RESTClient(INounResolver nounResolver = null, 
             IQueryStringResolver queryStringResolver = null,
             IVerbResolver verbResolver = null,
@@ -55,7 +59,11 @@
 
             InputPipeLine = new Dictionary<double, Tuple<string, Action<WebResponse>>>();
             OutputPipeLine = new Dictionary<double, Tuple<string, Action<WebRequest>>>();
+
+            ClientCertificateParameters = null;
         }
+
+        public ClientCertificateParameters ClientCertificateParameters { get; set; }
 
         public Dictionary<double, Tuple<string, Action<WebResponse>>> InputPipeLine { get; set; }
         public Dictionary<double, Tuple<string, Action<WebRequest>>> OutputPipeLine { get; set; }
@@ -246,6 +254,16 @@
         {
             var wr = WebRequest.Create (UriComposer.ComposeUri (Url, site, urlParameters, queryString));
             wr.Method = callMethod.ToString();
+            
+            if (ClientCertificateParameters != null)
+            {
+                var store = new X509Store(ClientCertificateParameters.StoreName, ClientCertificateParameters.StoreLocation);
+                store.Open(OpenFlags.ReadOnly);
+                var certs = store.Certificates.Find(ClientCertificateParameters.FindBy, ClientCertificateParameters.FindString, false);
+                if (certs.Count == 0) throw new CryptographicException("No certificates found.");
+                ((HttpWebRequest) wr).ClientCertificates.AddRange(certs);
+            }
+
             if (what != null && (what.Headers != null))
             {
                 foreach (var header in what.Headers)
@@ -350,6 +368,14 @@
 
             return editor (resp);
         }
+    }
+
+    public class ClientCertificateParameters
+    {
+        public string FindString { get; set; }
+        public X509FindType FindBy { get; set; }
+        public StoreLocation StoreLocation { get; set; }
+        public StoreName StoreName { get; set; }
     }
 
     public class InputOutputEditorSetters

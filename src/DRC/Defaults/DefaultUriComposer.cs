@@ -21,13 +21,13 @@
             }
             //Part 2 the parameters passed to the function call that aren't needed for the
             //output editor.
-            var part2 = functionParameters == null || functionParameters.Count() == 0
+            var part2 = functionParameters == null || !functionParameters.Any()
                             ? ""
                             : "/" + functionParameters.Aggregate((l, r) => l + "/" + r);
             //Part 3 the querystring
             var part3 = ""; 
             
-            if (queryDictionary != null && queryDictionary.Count () > 0)
+            if (queryDictionary != null && queryDictionary.Any())
             {    
                 part3 += "?";
                 foreach (var element in queryDictionary)
