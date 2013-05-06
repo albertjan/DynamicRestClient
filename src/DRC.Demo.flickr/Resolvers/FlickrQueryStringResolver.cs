@@ -37,7 +37,7 @@ namespace DRC.Demo.flickr.Resolvers
 
             retval = "." + tokens.Last ().ToLower ();
 
-            var tokensMinusLastMinusOn = tokens.Take (tokens.Count () - 1).Where (t => t != "On");
+            var tokensMinusLastMinusOn = tokens.Take (tokens.Count () - 1).Where (t => t != "on");
 
             foreach (var token in tokensMinusLastMinusOn)
             {
