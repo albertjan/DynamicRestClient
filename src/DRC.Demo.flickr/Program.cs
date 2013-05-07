@@ -28,14 +28,6 @@
 
             me.QueryStringResolver.ApiKey = "0936270ae439d42bce22ee3be8703112";
 
-            //me.GetInfoOnPeople.In = new Func<WebResponse, string> (wr =>
-            //{
-            //    using (var sr = new StreamReader (wr.GetResponseStream ()))
-            //    {
-            //        return sr.ReadToEnd ();
-            //    }
-            //});
-
             me.EchoTest.In = new Func<WebResponse, string> (wr =>
             {
                 using (var sr = new StreamReader (wr.GetResponseStream ()))
