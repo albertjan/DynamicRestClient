@@ -1,3 +1,5 @@
+using System;
+
 namespace DRC.Demo.flickr.Resolvers
 {
     using System.Collections.Generic;
@@ -37,7 +39,7 @@ namespace DRC.Demo.flickr.Resolvers
 
             retval = "." + tokens.Last ().ToLower ();
 
-            var tokensMinusLastMinusOn = tokens.Take (tokens.Count () - 1).Where (t => t != "on");
+            var tokensMinusLastMinusOn = tokens.Take (tokens.Count () - 1).Where (t => !string.Equals(t, "on", StringComparison.OrdinalIgnoreCase));
 
             foreach (var token in tokensMinusLastMinusOn)
             {

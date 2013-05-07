@@ -11,7 +11,7 @@
 
     public interface IAmAFlickr
     {
-        string GetInfoOnPeople (object query);
+        T GetInfoOnPeople<T>(object query) where T: rsp;
 
         string EchoTest(object paramters);
     }
@@ -28,13 +28,13 @@
 
             me.QueryStringResolver.ApiKey = "0936270ae439d42bce22ee3be8703112";
 
-            me.GetInfoOnPeople.In = new Func<WebResponse, string> (wr =>
-            {
-                using (var sr = new StreamReader (wr.GetResponseStream ()))
-                {
-                    return sr.ReadToEnd ();
-                }
-            });
+            //me.GetInfoOnPeople.In = new Func<WebResponse, string> (wr =>
+            //{
+            //    using (var sr = new StreamReader (wr.GetResponseStream ()))
+            //    {
+            //        return sr.ReadToEnd ();
+            //    }
+            //});
 
             me.EchoTest.In = new Func<WebResponse, string> (wr =>
             {
@@ -46,7 +46,7 @@
 
             IAmAFlickr client = Impromptu.ActLike<IAmAFlickr>(me);
             Console.WriteLine ("---------------------- getinfoonuser");
-            Console.WriteLine (client.GetInfoOnPeople (new { user_id = "61304303%40N08" }));
+            Console.WriteLine (client.GetInfoOnPeople<rsp>(new { user_id = "61304303%40N08" }));
             Console.WriteLine ("---------------------- echotest");
             Console.WriteLine (client.EchoTest (new { i_am_a = "banana", and_the_world_should_be_square = true }));
             Console.ReadLine();

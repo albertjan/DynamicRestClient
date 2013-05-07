@@ -233,9 +233,9 @@
                 {
                     return SimpleJson.DeserializeObject<T> (sr.ReadToEnd ());
                 }    
-            } 
-            
-            if (ofT.ContentType == "application/xml")
+            }
+
+            if (ofT.ContentType == "application/xml" || ofT.ContentType.StartsWith("text/xml"))
             {
                 return (T) new XmlSerializer (typeof (T)).Deserialize (ofT.GetResponseStream ());
             } 

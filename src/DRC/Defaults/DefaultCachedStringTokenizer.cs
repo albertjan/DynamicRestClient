@@ -19,7 +19,7 @@
             {
                 if (char.IsLower(last) && char.IsUpper(c))
                 {
-                    retval.Add(sb.ToString().ToLower());
+                    retval.Add(sb.ToString());
                     sb.Clear();
                 }
                 sb.Append(c);
