@@ -57,7 +57,9 @@
             VerbResolver = verbResolver ?? new DefaultVerbResolver(StringTokenizer);
             UriComposer = uriComposer ?? new DefaultUriComposer();
 
-            InputPipeLine = new Dictionary<double, Tuple<string, Action<WebResponse>>>();
+            //create input pipeline and store response
+            InputPipeLine = new Dictionary<double, Tuple<string, Action<WebResponse>>>
+            {{9999, new Tuple<string, Action<WebResponse>>("storeresponse", response => WebResponse = response)}};
             OutputPipeLine = new Dictionary<double, Tuple<string, Action<WebRequest>>>();
 
             ClientCertificateParameters = null;
@@ -105,6 +107,22 @@
             return true;
         }
 
+        public override bool TryConvert(ConvertBinder binder, out object result)
+        {
+            if (binder.Type == typeof(Stream))
+            {
+                result = WebResponse.GetResponseStream();
+                return result != null || base.TryConvert(binder, out result);
+            }
+
+            //var func = typeof(Func<,>).MakeGenericType(typeof(WebResponse), binder.Type);
+            var me = typeof(RESTClient).GetMethod("GetDeserializationMethod", BindingFlags.NonPublic | BindingFlags.Instance).MakeGenericMethod(binder.Type);
+
+            var trie = me.Invoke(this, new object[] {WebResponse});
+            
+            result = trie;
+            return result != null || base.TryConvert(binder, out result);
+        }
 
         /// <summary>
         /// Find an input editor from the function arguments.
@@ -144,7 +162,7 @@
                 InputEditor = (_editorDelegates.ContainsKey(binderName) &&
                             _editorDelegates[binderName].FirstOrDefault(d => d.IsInput()) != null)
                                 ? _editorDelegates[binderName].First(d => d.IsInput())
-                                : new Func<WebResponse, Stream>(s => s.GetResponseStream()),
+                                : new Func<WebResponse, RESTClient>(s => (dynamic)this),
                 OutputEditor = (_editorDelegates.ContainsKey(binderName) &&
                                 _editorDelegates[binderName].FirstOrDefault(d => d.IsOutput()) != null)
                                 ? _editorDelegates[binderName].First(d => d.IsOutput())
@@ -157,7 +175,7 @@
             
             retval.GenericTypeArgument = typeArg ?? retval.InputEditor.GetType().GetGenericArguments().Last();
 
-            if (typeArg != null && retval.InputEditor.GetType ().GetGenericArguments ().Last () != typeArg && retval.InputEditor.GetType ().GetGenericArguments ().Last () == typeof(Stream))
+            if (typeArg != null && retval.InputEditor.GetType ().GetGenericArguments ().Last () != typeArg && retval.InputEditor.GetType ().GetGenericArguments ().Last () == typeof(RESTClient))
             {
 
                 var func = typeof (Func<,>).MakeGenericType(typeof(WebResponse), typeArg);
@@ -223,9 +241,11 @@
                                           .ToArray ();
             return retval;
         }
-        
+
+        protected WebResponse WebResponse { get; set; }
+
 // ReSharper disable UnusedMember.Local
-        private T GetDeserializationMethod<T>(WebResponse ofT) where T : class
+        private T GetDeserializationMethod<T>(WebResponse ofT)
         {
             if (ofT.ContentType == "application/json")
             {
@@ -240,11 +260,11 @@
                 return (T) new XmlSerializer (typeof (T)).Deserialize (ofT.GetResponseStream ());
             } 
 
-            if (typeof(T) == typeof(string))
-            {
-                using (var sr = new StreamReader(ofT.GetResponseStream()))
-                    return sr.ReadToEnd() as T;
-            }
+            //if (typeof(T) == typeof(string))
+            //{
+            //    using (var sr = new StreamReader(ofT.GetResponseStream()))
+            //        return (T) sr.ReadToEnd();
+            //}
             
             throw new Exception("Can't Deserialise (" + ofT.ContentType + ")");
         }

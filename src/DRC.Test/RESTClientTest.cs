@@ -361,6 +361,20 @@
         }
 
         [Test]
+        public void ShouldTryToDeserializeJsonOnConvert()
+        {
+            var test =
+                TestWebRequestCreate.CreateTestRequest(
+                    SimpleJson.SerializeObject(new AModel { D = 0.1, I = 1, L = 2, S = "s" }));
+            test.ContentType = "application/json";
+            dynamic me = new RESTClient();
+            me.Url = "test://test";
+            AModel a = me.GetTest();
+            Assert.AreEqual(typeof(AModel), a.GetType());
+        }
+
+
+        [Test]
         public void ShouldTryToDeserializeXMLToGenericTypeArgument()
         {
             string xml;
