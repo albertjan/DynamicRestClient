@@ -474,6 +474,11 @@
 
     public class ClientRequest
     {
+        public ClientRequest()
+        {
+            Headers = new Dictionary<string, string>();
+        }
+
         public byte[] Body { get; set; }
         public string ContentType { get; set; }
         public Dictionary<string,string> Headers { get; set; }
