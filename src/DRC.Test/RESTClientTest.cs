@@ -9,8 +9,8 @@
     using System.Xml.Serialization;
    
     using DRC;
-    using DRC.Defaults;
-    using DRC.Interfaces;
+    using Defaults;
+    using Interfaces;
    
     using NUnit.Framework;
 
@@ -21,7 +21,6 @@
         public void Init()
         {
             WebRequest.RegisterPrefix("test", new TestWebRequestCreate());
-            var alternativeUriComposer = new AlternativeUriComposer();
         }
 
         [Test]
@@ -64,7 +63,7 @@
             //me.GetTest.In = new Func<Stream, int> (s => 1);
             me.GetTest.Out =
                 new Func<int, int, string, long, int, string, string, ClientRequest>(
-                    (i1, i2, s1, l1, i3, s2, s3) => new ClientRequest() {Body = new byte[12]});
+                    (i1, i2, s1, l1, i3, s2, s3) => new ClientRequest {Body = new byte[12]});
             me.GetTest(1, 2, "3", (long) 4, /* missing5,*/ "6", "7");
         }
 
@@ -92,10 +91,10 @@
             TestWebRequestCreate.CreateTestRequest("dummy");
             dynamic me = new RESTClient();
             me.Url = "test://test";
-            me.GetTest.Out = new Func<string, byte[]>(s =>
+            me.GetTest.Out = new Func<string, ClientRequest>(s =>
             {
                 Assert.AreEqual(s, "test");
-                return Encoding.UTF8.GetBytes(s);
+                return new ClientRequest {Body = Encoding.UTF8.GetBytes(s)};
             });
             me.GetTest("test");
         }
@@ -107,7 +106,7 @@
             dynamic me = new RESTClient();
             me.Url = "test://test";
             me.GetTest.Out =
-                new Func<int, int, string, long, int, string, string, byte[]>((i1, i2, s1, l1, i3, s2, s3) =>
+                new Func<int, int, string, long, int, string, string, ClientRequest>((i1, i2, s1, l1, i3, s2, s3) =>
                 {
                     Assert.AreEqual(i1, 1);
                     Assert.AreEqual(i2, 2);
@@ -116,7 +115,7 @@
                     Assert.AreEqual(i3, 5);
                     Assert.AreEqual(s2, "6");
                     Assert.AreEqual(s3, "7");
-                    return new byte[16];
+                    return new ClientRequest();
                 });
             me.GetTest(1, 2, "3", (long) 4, 5, "6", "7");
         }
@@ -124,12 +123,14 @@
         [Test]
         public void EnsureCorrenctFillingOfOutputEditorArgumentsWhenTheyArentCorrectlySorted()
         {
+            var isused = false;
             TestWebRequestCreate.CreateTestRequest("dummy");
             dynamic me = new RESTClient();
             me.Url = "test://test";
             me.GetTest.Out =
-                new Func<int, int, string, long, int, string, string, byte[]>((i1, i2, s1, l1, i3, s2, s3) =>
+                new Func<int, int, string, long, int, string, string, ClientRequest>((i1, i2, s1, l1, i3, s2, s3) =>
                 {
+                    isused = true;
                     Assert.AreEqual(i1, 1);
                     Assert.AreEqual(i2, 2);
                     Assert.AreEqual(s1, "3");
@@ -137,9 +138,10 @@
                     Assert.AreEqual(i3, 5);
                     Assert.AreEqual(s2, "6");
                     Assert.AreEqual(s3, "7");
-                    return new byte[16];
+                    return new ClientRequest();
                 });
             me.GetTest(1, 2, 5, "3", "6", "7", (long) 4);
+            Assert.IsTrue(isused);
         }
 
         [Test]
@@ -263,7 +265,7 @@
         [Test]
         public void MultipleNounTest()
         {
-            var request = TestWebRequestCreate.CreateTestRequest("");
+            TestWebRequestCreate.CreateTestRequest("");
 
             dynamic me = new RESTClient();
             me.Url = "test://base";
@@ -311,7 +313,7 @@
                                  Tuple.Create("pipelineitem", new Action<WebResponse>(resp => { pipelinetest = "yep"; })));
             me.OutputPipeLine.Add(0.002,
                                   Tuple.Create("pipelineitem",
-                                               new Action<WebRequest>(resp => { pipelinetest2 = "yep"; })));
+                                               new Action<ClientRequest>(resp => { pipelinetest2 = "yep"; })));
 
             me.GetTest.In = new Func<WebResponse, string>(w =>
             {
@@ -339,10 +341,10 @@
 
             me.OutputPipeLine.Add(0.1,
                                   Tuple.Create("hi",
-                                               new Action<WebRequest>(
+                                               new Action<ClientRequest>(
                                                    r =>
                                                    Assert.AreEqual("test://test/bananas/overthere",
-                                                                   r.RequestUri.ToString()))));
+                                                                   r.Url))));
 
             me.GetTest();
         }
@@ -577,7 +579,7 @@
         /// with the response to return.</summary>
         public TestWebRequest (string response)
         {
-            responseStream = new MemoryStream (System.Text.Encoding.UTF8.GetBytes (response));
+            responseStream = new MemoryStream (Encoding.UTF8.GetBytes (response));
         }
 
         /// <summary>Initializes a new instance of <see cref="TestWebRequest"/>
@@ -590,7 +592,7 @@
         /// <summary>Returns the request contents as a string.</summary>
         public string ContentAsString ()
         {
-            return System.Text.Encoding.UTF8.GetString (requestStream.ToArray ());
+            return Encoding.UTF8.GetString (requestStream.ToArray ());
         }
 
         /// <summary>See <see cref="WebRequest.GetRequestStream"/>.</summary>
@@ -646,7 +648,7 @@
         /// with the response stream to return.</summary>
         public TestWebReponse (Stream responseStream, Uri uri, string contentType = null)
         {
-            this.requestUri = uri;
+            requestUri = uri;
             _contentType = contentType;
             this.responseStream = responseStream;
         }

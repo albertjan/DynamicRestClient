@@ -25,7 +25,7 @@
     ///     new {
     ///             page = 1,
     ///             items = 50
-    ///         }); will result in GET URL + /orders?page=1&items=50
+    ///         }); will result in GET URL + /orders?page=1&amp;items=50
     /// 
     /// During the first call it will determine the deserialization method and type. This will be cached 
     /// while it lives. If it stops working it will try to redetermine the method and types. If it can't 
@@ -60,7 +60,7 @@
             //create input pipeline and store response
             InputPipeLine = new Dictionary<double, Tuple<string, Action<WebResponse>>>
             {{9999, new Tuple<string, Action<WebResponse>>("storeresponse", response => WebResponse = response)}};
-            OutputPipeLine = new Dictionary<double, Tuple<string, Action<WebRequest>>>();
+            OutputPipeLine = new Dictionary<double, Tuple<string, Action<ClientRequest>>>();
 
             ClientCertificateParameters = null;
         }
@@ -68,7 +68,7 @@
         public ClientCertificateParameters ClientCertificateParameters { get; set; }
 
         public Dictionary<double, Tuple<string, Action<WebResponse>>> InputPipeLine { get; set; }
-        public Dictionary<double, Tuple<string, Action<WebRequest>>> OutputPipeLine { get; set; }
+        public Dictionary<double, Tuple<string, Action<ClientRequest>>> OutputPipeLine { get; set; }
 
         /// <summary>
         /// Get an InputOutputEditorSetters object for _every_ name you put in here.
@@ -182,8 +182,6 @@
                 var me = typeof (RESTClient).GetMethod ("GetDeserializationMethod", BindingFlags.NonPublic | BindingFlags.Instance).MakeGenericMethod (typeArg);
 
                 retval.InputEditor = Delegate.CreateDelegate(func, this, me, true);
-                     
-                //throw new ArgumentException ("GenericArgument not the same as TOut of the InputEditor");
             }
 
             if (typeArg != null && retval.InputEditor.GetType().GetGenericArguments().Last() != typeArg)
@@ -259,20 +257,23 @@
             {
                 return (T) new XmlSerializer (typeof (T)).Deserialize (ofT.GetResponseStream ());
             } 
-
-            //if (typeof(T) == typeof(string))
-            //{
-            //    using (var sr = new StreamReader(ofT.GetResponseStream()))
-            //        return (T) sr.ReadToEnd();
-            //}
-            
+           
             throw new Exception("Can't Deserialise (" + ofT.ContentType + ")");
         }
 // ReSharper restore UnusedMember.Local
 
-        public T DoCall<T> (Verb callMethod, string site, IEnumerable<KeyValuePair<string, string>> queryString, Func<WebResponse, T> editor, object[] urlParameters = null, ClientRequest what = null)
+        public T DoCall<T> (Verb callMethod, 
+                            string site, 
+                            IEnumerable<KeyValuePair<string, string>> queryString, 
+                            Func<WebResponse, T> editor, 
+                            object[] urlParameters = null, 
+                            ClientRequest what = null)
         {
-            var wr = WebRequest.Create (UriComposer.ComposeUri (Url, site, urlParameters, queryString));
+            if (what == null) what = new ClientRequest();
+
+            what.Url = what.Url ?? UriComposer.ComposeUri(Url, site, urlParameters, queryString);
+
+            var wr = WebRequest.Create(what.Url);
             wr.Method = callMethod.ToString();
             
             if (ClientCertificateParameters != null)
@@ -284,7 +285,13 @@
                 ((HttpWebRequest) wr).ClientCertificates.AddRange(certs);
             }
 
-            if (what != null && (what.Headers != null))
+            //call output pipelinebefore writing body (httpwebrequest will send the body immediatly
+            foreach (var pipelineItem in OutputPipeLine.OrderBy(p => p.Key))
+            {
+                pipelineItem.Value.Item2(what);
+            }
+
+            if (what.Headers.Count != 0)
             {
                 foreach (var header in what.Headers)
                 {
@@ -338,12 +345,6 @@
                 if (!String.IsNullOrWhiteSpace(what.ContentType)) wr.ContentType = what.ContentType;
             }
 
-            //call output pipelinebefore writing body (httpwebrequest will send the body immediatly
-            foreach (var pipelineItem in OutputPipeLine.OrderBy (p => p.Key))
-            {
-                pipelineItem.Value.Item2 (wr);
-            }
-
             switch (callMethod)
             {
                 case Verb.GET:
@@ -354,21 +355,18 @@
                     break;
                 case Verb.PUT:
                 case Verb.POST:
-                    if (what != null)
-                    {
-                        wr.ContentLength = what.Body.Length;
-                        if (what.Body.Length > 0)
-                            using (var sr = new BinaryWriter(wr.GetRequestStream()))
-                            {
-                                sr.Write(what.Body);
-                                sr.Flush();
-                            }
-                    }
+                    wr.ContentLength = what.Body.Length;
+                    if (what.Body.Length > 0)
+                        using (var sr = new BinaryWriter(wr.GetRequestStream()))
+                        {
+                            sr.Write(what.Body);
+                            sr.Flush();
+                        }
                     break;
                 default:
                     throw new ArgumentOutOfRangeException("callMethod");
             }
-            WebResponse resp = null;
+            WebResponse resp;
 
             //swallow stupid exceptions!!
             // ReSharper disable EmptyGeneralCatchClause
@@ -388,6 +386,81 @@
 
             return editor (resp);
         }
+
+        /// <summary>
+        /// Class that contain the specified editor delegates.
+        /// </summary>
+        public class InputOutputEditorSetters
+        {
+            public string BinderName { get; set; }
+            public Dictionary<string, List<Delegate>> EditorDelegates { get; set; }
+            public List<Delegate> CurrentEditorDelegates { get; set; }
+            public INounResolver NounResolver { get; set; }
+
+            public InputOutputEditorSetters(string binderName, Dictionary<string, List<Delegate>> editorDelegates, INounResolver nounResolver)
+            {
+                if (!editorDelegates.ContainsKey(binderName))
+                    editorDelegates.Add(binderName, new List<Delegate>());
+
+                BinderName = binderName;
+                EditorDelegates = editorDelegates;
+                NounResolver = nounResolver;
+                CurrentEditorDelegates = EditorDelegates[BinderName];
+            }
+
+            public Delegate In
+            {
+                get
+                {
+                    return CurrentEditorDelegates.FirstOrDefault(d => d.IsInput());
+                }
+                set
+                {
+                    if (In != null)
+                        CurrentEditorDelegates.Remove(In);
+
+                    if (!value.IsInput())
+                        throw new EditorDelegateException("Input editor delegate must be of signature: Func<WebResponse, T*>");
+
+                    CurrentEditorDelegates.Add(value);
+                }
+            }
+
+            public Delegate Out
+            {
+                get
+                {
+                    return CurrentEditorDelegates.FirstOrDefault(d => d.IsOutput());
+                }
+                set
+                {
+                    if (Out != null)
+                        CurrentEditorDelegates.Remove(Out);
+
+                    if (!value.IsOutput())
+                        throw new EditorDelegateException("Input editor delegate must be of signature: Func<T*, ClientRequest>");
+
+                    CurrentEditorDelegates.Add(value);
+                }
+            }
+
+            public string Url
+            {
+                get { return NounResolver.PredefinedUrls[BinderName]; }
+                set
+                {
+                    if (NounResolver.PredefinedUrls.ContainsKey(BinderName))
+                        NounResolver.PredefinedUrls[BinderName] = value;
+                    else
+                        NounResolver.PredefinedUrls.Add(BinderName, value);
+                }
+            }
+        }
+    }
+
+    public class EditorDelegateException : Exception
+    {
+        public EditorDelegateException(string message) : base(message) { }
     }
 
     public class ClientCertificateParameters
@@ -396,65 +469,6 @@
         public X509FindType FindBy { get; set; }
         public StoreLocation StoreLocation { get; set; }
         public StoreName StoreName { get; set; }
-    }
-
-    public class InputOutputEditorSetters
-    {
-        public string BinderName { get; set; }
-        public Dictionary<string, List<Delegate>> EditorDelegates { get; set; }
-        public List<Delegate> CurrentEditorDelegates { get; set; }
-        public INounResolver NounResolver { get; set; }
-
-        public InputOutputEditorSetters (string binderName, Dictionary<string, List<Delegate>> editorDelegates, INounResolver nounResolver)
-        {
-            if (!editorDelegates.ContainsKey (binderName))
-                editorDelegates.Add (binderName, new List<Delegate> ());
-
-            BinderName = binderName;
-            EditorDelegates = editorDelegates;
-            NounResolver = nounResolver;
-            CurrentEditorDelegates = EditorDelegates[BinderName];
-        }
-
-        public Delegate In
-        {
-            get
-            {
-                return CurrentEditorDelegates.FirstOrDefault (d => d.IsInput ());
-            }
-            set
-            {
-                if (In != null)
-                    CurrentEditorDelegates.Remove (In);
-                CurrentEditorDelegates.Add (value);
-            }
-        }
-
-        public Delegate Out
-        {
-            get
-            {
-                return CurrentEditorDelegates.FirstOrDefault (d => d.IsOutput ());
-            }
-            set
-            {
-                if (Out != null)
-                    CurrentEditorDelegates.Remove (Out);
-                CurrentEditorDelegates.Add (value); 
-            }
-        }
-
-        public string Url
-        {
-            get { return NounResolver.PredefinedUrls[BinderName]; }
-            set
-            {
-                if (NounResolver.PredefinedUrls.ContainsKey (BinderName))
-                    NounResolver.PredefinedUrls[BinderName] = value;
-                else
-                    NounResolver.PredefinedUrls.Add (BinderName, value);
-            } 
-        }
     }
 
     public class CallMethodAgruments
@@ -482,51 +496,6 @@
         public byte[] Body { get; set; }
         public string ContentType { get; set; }
         public Dictionary<string,string> Headers { get; set; }
-    }
-
-    public static class Extensions
-    {
-        public static T TakeNthOccurence<T> (this IEnumerable<T> source, Func<T, bool> predicate, int n)
-        {
-            var it = source.GetEnumerator();
-            var count = 0;
-            while (it.MoveNext())
-            {
-                if (predicate (it.Current)) 
-                    count++;
-                 if (count == n) return it.Current;
-            }
-            throw new InvalidOperationException ("No element satisfies the condition in predicate. ");
-
-        }
-
-        public static bool IsInput (this Delegate inputDelegate)
-        {
-            return (inputDelegate.GetType ().Name.Contains ("Func") &&
-                    inputDelegate.GetType ().GetGenericArguments ().First () == typeof (WebResponse));
-        }
-
-        public static bool IsOutput (this Delegate outputDelegate)
-        {
-            return (outputDelegate.GetType ().Name.Contains ("Func") &&
-                    outputDelegate.GetType ().GetGenericArguments ().Last () == typeof (ClientRequest));
-        }
-
-        public static IEnumerable<T> SkipLastN<T> (this IEnumerable<T> source, int n)
-        {
-            var it = source.GetEnumerator ();
-            bool hasRemainingItems;
-            var cache = new Queue<T> (n + 1);
-            do
-            {
-                if (hasRemainingItems = it.MoveNext ())
-                {
-                    cache.Enqueue (it.Current);
-                    if (cache.Count > n)
-                        yield return cache.Dequeue ();
-                }
-            } while (hasRemainingItems);
-        }
-
+        public string Url { get; set; }
     }
 }

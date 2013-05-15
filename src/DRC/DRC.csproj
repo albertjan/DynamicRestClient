@@ -55,6 +55,7 @@
     <Compile Include="Defaults\DefaultCachedStringTokenizer.cs" />
     <Compile Include="Defaults\DefaultUriComposer.cs" />
     <Compile Include="Defaults\DefaultVerbResolver.cs" />
+    <Compile Include="Extensions.cs" />
     <Compile Include="Interfaces\INounResolver.cs" />
     <Compile Include="Interfaces\IQueryStringResolver.cs" />
     <Compile Include="Interfaces\IStringTokenizer.cs" />
