@@ -12,7 +12,7 @@ dynamic me = new RESTClient ();
 me.Url = "http://someapi.com";
 
 //Get Things!
-var things = (IEnumerable<Thing>)client.GetThings<IEnumerable<Thing>>();
+IEnumerable<Thing> things = client.GetThings();
 ```
 
 ImpromptuInterface lets you do this:
@@ -37,6 +37,7 @@ Isn't it cute. More to come see the tests for more usages.
 
 ##Recently added##
 
+* Automatic deserialisation of the response object to the type of the variable it's put into.
 * Automatic xml deserialisation to the generic function argument type if the contenttype is `application/xml`.
 * Support for single noun function calls `client.Resolve("id");` will result in a GET /resolve/id
 * Uri composition adjustable by Implementing `IUriComposer` and passing it to the RestClient's constructor
