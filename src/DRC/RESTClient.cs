@@ -166,7 +166,7 @@
                 OutputEditor = (_editorDelegates.ContainsKey(binderName) &&
                                 _editorDelegates[binderName].FirstOrDefault(d => d.IsOutput()) != null)
                                 ? _editorDelegates[binderName].First(d => d.IsOutput())
-                                : new Func<byte[], ClientRequest>(b => new ClientRequest{Body = b})
+                                : new Func<ClientRequest>(() => new ClientRequest())
             };
 
             //if the arguments have and input or output editor use that one.
@@ -271,9 +271,9 @@
         {
             if (what == null) what = new ClientRequest();
 
-            what.Url = what.Url ?? UriComposer.ComposeUri(Url, site, urlParameters, queryString);
+            what.Uri = what.Uri ?? UriComposer.ComposeUri(Url, site, urlParameters, queryString);
 
-            var wr = WebRequest.Create(what.Url);
+            var wr = WebRequest.Create(what.Uri);
             wr.Method = callMethod.ToString();
             
             if (ClientCertificateParameters != null)
@@ -496,6 +496,6 @@
         public byte[] Body { get; set; }
         public string ContentType { get; set; }
         public Dictionary<string,string> Headers { get; set; }
-        public string Url { get; set; }
+        public string Uri { get; set; }
     }
 }

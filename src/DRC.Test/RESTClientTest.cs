@@ -344,7 +344,7 @@
                                                new Action<ClientRequest>(
                                                    r =>
                                                    Assert.AreEqual("test://test/bananas/overthere",
-                                                                   r.Url))));
+                                                                   r.Uri))));
 
             me.GetTest();
         }
