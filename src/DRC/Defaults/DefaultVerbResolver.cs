@@ -16,7 +16,7 @@ namespace DRC.Defaults
         public Verb ResolveVerb(string functionName)
         {
             var verb = Tokenizer.GetTokens(functionName).FirstOrDefault();
-            if (verb == null) throw new ArgumentException("A Functionname must have atleast one token.");
+            if (String.IsNullOrWhiteSpace(verb)) throw new ArgumentException("A Functionname must have atleast one token.");
             switch (verb.ToLower())
             {
                 case "get":

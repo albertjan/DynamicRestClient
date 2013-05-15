@@ -3,8 +3,10 @@
     using System;
     using System.IO;
     using System.Net;
-
-    using Defaults;
+    using System.Collections.Generic;
+    using System.Linq;
+    
+    using DRC.Interfaces;
     using Resolvers;
     
     using ImpromptuInterface;
@@ -16,21 +18,39 @@
         string EchoTest(object paramters);
     }
 
+    public class FlickrAppRegistrations : IApplicationRegistrations
+    {
+        public IEnumerable<TypeRegistration> TypeRegistrations 
+        { 
+            get
+            {
+                return new[]
+                {
+                    new TypeRegistration { RegistrationType = typeof (INounResolver), InstanceType = typeof (FlickrNounResolver) },
+                    new TypeRegistration { RegistrationType = typeof (IQueryStringResolver), InstanceType = typeof (FlickrQueryStringResolver) },
+                    new TypeRegistration { RegistrationType = typeof (IVerbResolver), InstanceType = typeof (FlickrVerbResolver) }
+                };
+            } 
+        }
+        public IEnumerable<InstanceRegistration> InstanceRegistrations
+        {
+            get { return Enumerable.Empty<InstanceRegistration>(); }
+        }
+    }
+
     class Program
     {
         static void Main (string[] args)
         {
-            var qst = new DefaultCachedStringTokenizer();
-            dynamic me = new RESTClient(new FlickrNounResolver(qst), new FlickrQueryStringResolver(qst),
-                                        new FlickrVerbResolver(qst), qst);
+            dynamic me = new RESTClient();
 
             me.Url = "http://api.flickr.com";
 
             me.QueryStringResolver.ApiKey = "0936270ae439d42bce22ee3be8703112";
 
-            me.EchoTest.In = new Func<WebResponse, string> (wr =>
+            me.EchoTest.In = new Func<Response, string> (wr =>
             {
-                using (var sr = new StreamReader (wr.GetResponseStream ()))
+                using (var sr = new StreamReader (wr.ResponseStream))
                 {
                     return sr.ReadToEnd ();
                 }

@@ -11,7 +11,8 @@
     using DRC;
     using Defaults;
     using Interfaces;
-   
+ 
+    using TinyIoC;
     using NUnit.Framework;
 
     [TestFixture]
@@ -21,7 +22,12 @@
         public void Init()
         {
             WebRequest.RegisterPrefix("test", new TestWebRequestCreate());
+            Container = new TinyIoC.TinyIoCContainer();
+            Container.AutoRegister();
+            Container.Register<IUriComposer>(new DefaultUriComposer());
         }
+
+        public TinyIoCContainer Container { get; set; }
 
         [Test]
         public void InputAndOutputExtensionsMethodTest()
@@ -168,7 +174,7 @@
         {
             TestWebRequestCreate.CreateTestRequest("dummy");
 
-            dynamic me = new RESTClient();
+            dynamic me = new RESTClient(Container);
             me.Url = "test://base";
             me.GetTest.In = new Func<Response, Stream>(r =>
             {
@@ -220,7 +226,7 @@
         {
             TestWebRequestCreate.CreateTestRequest("dummy");
 
-            dynamic me = new RESTClient();
+            dynamic me = new RESTClient(Container);
             me.Url = "test://base";
 
             var result = me.GetTest<string>( 
@@ -245,7 +251,7 @@
                 /*InputEditor*/
                 new Func<Response, string>(w =>
                 {
-                    Assert.AreEqual(new Uri("test://base/test/param?page=1&items=50"), w.ResponseUri);
+                    Assert.AreEqual(w.ResponseUri, "test://base/test/param?page=1&items=50");
                     using (var sr = new StreamReader(w.ResponseStream))
                         return sr.ReadToEnd();
                 }));
@@ -282,17 +288,17 @@
         [ExpectedException(typeof (ArgumentException), ExpectedMessage = "A Functionname must have atleast one token.")]
         public void DefaultVerbResolverTestEmptyFunctionName()
         {
-            new DefaultVerbResolver(new DefaultStringTokenizer()).ResolveVerb("");
+            new DefaultVerbResolver(new DefaultCachedStringTokenizer()).ResolveVerb("");
         }
 
         [Test]
         public void DefaultVerbResolverTest()
         {
-            var get = new DefaultVerbResolver(new DefaultStringTokenizer()).ResolveVerb("Get");
-            var put = new DefaultVerbResolver(new DefaultStringTokenizer()).ResolveVerb("Put");
-            var post = new DefaultVerbResolver(new DefaultStringTokenizer()).ResolveVerb("Post");
-            var del = new DefaultVerbResolver(new DefaultStringTokenizer()).ResolveVerb("Delete");
-            var bananas = new DefaultVerbResolver(new DefaultStringTokenizer()).ResolveVerb("BananasBananas");
+            var get = new DefaultVerbResolver(new DefaultCachedStringTokenizer()).ResolveVerb("Get");
+            var put = new DefaultVerbResolver(new DefaultCachedStringTokenizer()).ResolveVerb("Put");
+            var post = new DefaultVerbResolver(new DefaultCachedStringTokenizer()).ResolveVerb("Post");
+            var del = new DefaultVerbResolver(new DefaultCachedStringTokenizer()).ResolveVerb("Delete");
+            var bananas = new DefaultVerbResolver(new DefaultCachedStringTokenizer()).ResolveVerb("BananasBananas");
             Assert.AreEqual(get, Verb.GET);
             Assert.AreEqual(put, Verb.PUT);
             Assert.AreEqual(post, Verb.POST);
@@ -428,11 +434,13 @@
         {
             TestWebRequestCreate.CreateTestRequest ("dummy");
 
-            dynamic me = new RESTClient (null, null, null, null, new AlternativeUriComposer());
+            Container.Register<IUriComposer>(new AlternativeUriComposer());
+
+            dynamic me = new RESTClient (Container);
             me.Url = "test://base";
             me.GetTest.In = new Func<Response, Stream> (r =>
             {
-                Assert.AreEqual (new Uri ("test://base/test/param/"), r.ResponseUri);
+                Assert.AreEqual(r.ResponseUri, "test://base/test/param/");
                 return r.ResponseStream;
             });
             me.GetTest ("param");

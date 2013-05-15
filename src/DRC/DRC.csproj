@@ -49,7 +49,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Defaults\DefaultStringTokenizer.cs" />
+    <Compile Include="ClientCertificateParameters.cs" />
     <Compile Include="Defaults\DefaultNounResolver.cs" />
     <Compile Include="Defaults\DefaultQueryStringResolver.cs" />
     <Compile Include="Defaults\DefaultCachedStringTokenizer.cs" />
@@ -63,8 +63,11 @@
     <Compile Include="Interfaces\IVerbResolver.cs" />
     <Compile Include="Interfaces\Verb.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Request.cs" />
+    <Compile Include="Response.cs" />
     <Compile Include="RESTClient.cs" />
     <Compile Include="SimpleJson.cs" />
+    <Compile Include="TinyIoC.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="DRC.nuspec" />

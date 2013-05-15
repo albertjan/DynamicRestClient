@@ -11,8 +11,9 @@
     using System.Security.Cryptography;
     using System.Security.Cryptography.X509Certificates;
 
-    using Defaults;
+    using TinyIoC;
     using Interfaces;
+    using DRC.Defaults;
 
     using ImpromptuInterface;
     
@@ -35,7 +36,9 @@
     public class RESTClient: DynamicObject 
     {
         private readonly Dictionary<string, List<Delegate>> _editorDelegates = new Dictionary<string, List<Delegate>> ();
-        
+
+        public TinyIoCContainer Container { get; set; }
+
         public INounResolver NounResolver { get; set; }
         public IQueryStringResolver QueryStringResolver { get; set; }
         public IVerbResolver VerbResolver { get; set; }
@@ -43,28 +46,60 @@
         public IUriComposer UriComposer { get; set; }
         public string Url { get; set; }
 
-        public RESTClient(INounResolver nounResolver = null, 
-            IQueryStringResolver queryStringResolver = null,
-            IVerbResolver verbResolver = null,
-            IStringTokenizer stringTokenizer = null,
-            IUriComposer uriComposer = null)
+        public RESTClient(TinyIoCContainer container = null)
         {
-            StringTokenizer = stringTokenizer ?? new DefaultCachedStringTokenizer ();
-            NounResolver = nounResolver ?? new DefaultNounResolver (StringTokenizer);
-            QueryStringResolver = queryStringResolver ?? new DefaultQueryStringResolver(StringTokenizer);
-            VerbResolver = verbResolver ?? new DefaultVerbResolver(StringTokenizer);
-            UriComposer = uriComposer ?? new DefaultUriComposer();
+            if (container == null)
+            {
+                Container = new TinyIoCContainer();
+                Container.AutoRegister();
+            }
+            else
+            {
+                Container = container;
+            }
+            
+            IApplicationRegistrations applicationRegistration;
+
+            if (Container.TryResolve(out applicationRegistration))
+            {
+
+                foreach (var typeRegistration in applicationRegistration.TypeRegistrations)
+                {
+                    Container.Register(typeRegistration.RegistrationType, typeRegistration.InstanceType);
+                }
+
+                foreach (var instanceRegistration in applicationRegistration.InstanceRegistrations)
+                {
+                    Container.Register(instanceRegistration.RegistrationType, instanceRegistration.Instance);
+                }
+            }
+
+            StringTokenizer = Container.Resolve<IStringTokenizer>();
+            NounResolver = Container.Resolve<INounResolver>();
+            QueryStringResolver = Container.Resolve<IQueryStringResolver>();
+            VerbResolver = Container.Resolve<IVerbResolver>();
+            UriComposer = Container.Resolve<IUriComposer>();
 
             //create input pipeline and store response
             InputPipeLine = new Dictionary<double, Tuple<string, Action<Response>>>();
             OutputPipeLine = new Dictionary<double, Tuple<string, Action<Request>>>();
-
+            
             ClientCertificateParameters = null;
         }
 
+        /// <summary>
+        /// With these parameters you can tell the client where to find the clientcertificate
+        /// </summary>
         public ClientCertificateParameters ClientCertificateParameters { get; set; }
 
+        /// <summary>
+        /// InputPipeline: A collection of PipelineItem's that will be called on the incomming response from the server
+        /// </summary>
         public Dictionary<double, Tuple<string, Action<Response>>> InputPipeLine { get; set; }
+
+        /// <summary>
+        /// OuputPipeline: A collection of PipelineItem's that will be called on the outgoing request to the server. 
+        /// </summary>
         public Dictionary<double, Tuple<string, Action<Request>>> OutputPipeLine { get; set; }
 
         /// <summary>
@@ -238,7 +273,7 @@
            
             throw new Exception("Can't Deserialise (" + ofT.ContentType + ")");
         }
-// ReSharper restore UnusedMember.Local
+        // ReSharper restore UnusedMember.Local
 
         public T DoCall<T> (Verb callMethod, 
                             string site, 
@@ -357,12 +392,14 @@
             }
             // ReSharper restore EmptyGeneralCatchClause
 
-            var retresp = new Response(this);
-            retresp.ResponseUri = resp.ResponseUri.ToString();
-            retresp.ContentLength = resp.ContentLength;
-            retresp.ContentType = resp.ContentType;
-            retresp.Headers = resp.Headers.ToDictionary();
-            retresp.ResponseStream = resp.GetResponseStream();
+            var retresp = new Response(this)
+            {
+                ResponseUri = resp.ResponseUri.ToString(),
+                ContentLength = resp.ContentLength,
+                ContentType = resp.ContentType,
+                Headers = resp.Headers.ToDictionary(),
+                ResponseStream = resp.GetResponseStream()
+            };
 
             foreach (var pipelineItem in InputPipeLine.OrderBy(p=> p.Key))
             {
@@ -370,6 +407,21 @@
             }
 
             return editor (retresp);
+        }
+
+        private class CallMethodAgruments
+        {
+            public Type GenericTypeArgument { get; set; }
+            public Delegate InputEditor { get; set; }
+            public Delegate OutputEditor { get; set; }
+            public IEnumerable<KeyValuePair<string, string>> QueryDict { get; set; }
+            public object[] UrlParameters { get; set; }
+            public Request Payload { get; set; }
+        }
+
+        public interface ITypeArguments
+        {
+            IList<Type> m_typeArguments { get; }
         }
 
         /// <summary>
@@ -443,82 +495,29 @@
         }
     }
 
+    public interface IApplicationRegistrations
+    {
+        IEnumerable<TypeRegistration> TypeRegistrations { get; }
+        IEnumerable<InstanceRegistration> InstanceRegistrations { get; }
+    }
+    
+    public abstract class Registration
+    {
+        public Type RegistrationType { get; set; }
+    }
+
+    public class TypeRegistration : Registration
+    {
+        public Type InstanceType { get; set; }        
+    }
+
+    public class InstanceRegistration : Registration
+    {
+        public object Instance { get; set; }
+    }
+
     public class EditorDelegateException : Exception
     {
         public EditorDelegateException(string message) : base(message) { }
-    }
-
-    public class ClientCertificateParameters
-    {
-        public string FindString { get; set; }
-        public X509FindType FindBy { get; set; }
-        public StoreLocation StoreLocation { get; set; }
-        public StoreName StoreName { get; set; }
-    }
-
-    public class CallMethodAgruments
-    {
-        public Type GenericTypeArgument { get; set; }
-        public Delegate InputEditor { get; set; }
-        public Delegate OutputEditor { get; set;}
-        public IEnumerable<KeyValuePair<string,string>> QueryDict { get; set; }
-        public object[] UrlParameters { get; set; }
-        public Request Payload { get; set; }
-    }
-
-    public interface ITypeArguments
-    {
-        IList<Type> m_typeArguments { get; }
-    }
-
-    public class Request
-    {
-        public Request()
-        {
-            Headers = new Dictionary<string, string>();
-        }
-
-        public byte[] Body { get; set; }
-        public string ContentType { get; set; }
-        public Dictionary<string,string> Headers { get; set; }
-        public string Uri { get; set; }
-    }
-
-    public class Response : DynamicObject
-    {
-        private readonly RESTClient _client;
-        public int StatusCode { get; set; }
-        public Dictionary<string, string[]> Headers { get; set; }
-        public Stream ResponseStream { get; set; }
-        public string ContentType { get; set; }
-        public long ContentLength { get; set; }
-        public string ContentEncoding { get; set; }
-        public string ResponseUri { get; set; }
-
-        public Response(RESTClient client)
-        {
-            _client = client;
-        }
-
-        public override bool TryConvert(ConvertBinder binder, out object result)
-        {
-            if (binder.Type == typeof(Stream))
-            {
-                result = ResponseStream;
-                return result != null || base.TryConvert(binder, out result);
-            }
-
-            if (binder.Type == typeof(int))
-            {
-                result = StatusCode;
-                return true;
-            }
-
-            var me = typeof(RESTClient).GetMethod("GetDeserializationMethod", BindingFlags.NonPublic | BindingFlags.Instance).MakeGenericMethod(binder.Type);
-
-            result = me.Invoke(_client, new object[] { this });
-
-            return result != null || base.TryConvert(binder, out result);
-        }
     }
 }
