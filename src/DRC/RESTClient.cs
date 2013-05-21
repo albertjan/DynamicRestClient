@@ -14,8 +14,9 @@
     using TinyIoC;
     using Interfaces;
     using DRC.Defaults;
-
+#if !__MonoCS__
     using ImpromptuInterface;
+#endif
     
     /// <summary>
     /// Set the URL first.
@@ -124,8 +125,16 @@
         public override bool TryInvokeMember (InvokeMemberBinder binder, object[] args, out object result)
         {
             //get the Type argument from the binder
-            var typeArg = binder.ActLike<ITypeArguments>().m_typeArguments.FirstOrDefault();
+#if !__MonoCS__
+			var typeArgs = Impromptu.InvokeGet(binder, "Microsoft.CSharp.RuntimeBinder.ICSharpInvokeOrInvokeMemberBinder.TypeArguments")
+				as IList<Type>;
+			var typeArg = typeArgs.FirstOrDefault();
+#else
+			var csharpBinder = binder.GetType().GetField("typeArguments", BindingFlags.NonPublic | BindingFlags.Instance);
 
+			var typeArgs = csharpBinder.GetValue(binder) as IList<Type>;
+			var typeArg = typeArgs == null ? null : typeArgs.FirstOrDefault();
+#endif
             //Mangle the function name into nouns and verbs
             var noun = NounResolver.ResolveNoun (binder.Name);
             var verb = VerbResolver.ResolveVerb (binder.Name);
@@ -204,8 +213,12 @@
 
 
             //find the anonymous type to turn into the querystring
-            var anonymousQueryObject = argList.FirstOrDefault (o => o.GetType ().Name.Contains ("Anonymous"));
-            IEnumerable<KeyValuePair<string, string>> queryDict = null;
+#if __MonoCS__
+			var anonymousQueryObject = argList.FirstOrDefault (o => o.GetType ().Name.Contains ("AnonType"));
+#else
+			var anonymousQueryObject = argList.FirstOrDefault (o => o.GetType ().Name.Contains ("Anonymous"));
+#endif
+			IEnumerable<KeyValuePair<string, string>> queryDict = null;
             if (anonymousQueryObject != null)
                 queryDict = QueryStringResolver.ResolveQueryDict(binderName, anonymousQueryObject);
             
@@ -235,9 +248,13 @@
 
                     sortedArgs.Add(argList.TakeNthOccurence(o=>o.GetType().Name == type, typeOrderDict[outputEditorArgumentsType]));
                 }
-
+#if !__MonoCS__
                 retval.Payload = (Request)retval.OutputEditor.FastDynamicInvoke (sortedArgs.ToArray ()); /* FastDynamicInvoke wants an
-                                                                                                         * array */
+                																					      * array */
+#else
+				retval.Payload = (Request)retval.OutputEditor.DynamicInvoke(sortedArgs.ToArray());
+#endif
+
             }
             catch (Exception ex)
             {
@@ -249,7 +266,7 @@
 
             //find url parameters
             retval.UrlParameters = argList.Where (o => !o.GetType ().Name.Contains ("Func`")) //no funcs
-                                          .Where (o => o != argList.FirstOrDefault(ob => ob.GetType().Name.Contains("Anonymous"))) //not the first anonymous object
+                                          .Where (o => o != argList.FirstOrDefault(ob => ob.GetType().Name.Contains("Anonymous") || ob.GetType().Name.Contains ("AnonType"))) //not the first anonymous object
                                           .Where (o => !sortedArgs.Contains (o)) //no output editor arguments
                                           .ToArray ();
             return retval;

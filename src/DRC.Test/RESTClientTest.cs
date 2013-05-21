@@ -13,6 +13,7 @@
     using Interfaces;
  
     using TinyIoC;
+
     using NUnit.Framework;
 
     [TestFixture]
@@ -47,9 +48,9 @@
         public void SkipLastNExtensionMethodTest()
         {
             var test = new[] {1, 2, 3, 4}.SkipLastN(1);
-            Assert.AreEqual(new[] {1, 2, 3}, test);
+            Assert.AreEqual(new[] {1, 2, 3}, test.ToArray());
             test = test.SkipLastN(2);
-            Assert.AreEqual(new[] {1}, test);
+            Assert.AreEqual(new[] {1}, test.ToArray());
         }
 
         [Test]
