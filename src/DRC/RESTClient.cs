@@ -13,7 +13,6 @@
 
     using TinyIoC;
     using Interfaces;
-    using DRC.Defaults;
 #if !__MonoCS__
     using ImpromptuInterface;
 #endif
@@ -155,7 +154,7 @@
         /// <returns></returns>
         private Delegate FindInputEditor(IEnumerable<object> functionArguments)
         {
-            return functionArguments.Where (o => o.GetType ().Name == "Func`2").Cast<Delegate> ().FirstOrDefault (d => d.IsInput ());
+            return functionArguments.Where (o => o.GetType ().IsFunc(2)).Cast<Delegate> ().FirstOrDefault (d => d.IsInput ());
         }
 
 
@@ -166,7 +165,7 @@
         /// <returns></returns>
         private Delegate FindOutputEditor (IEnumerable<object> functionArguments)
         {
-            return functionArguments.Where (o => o.GetType ().Name.Contains("Func")).Cast<Delegate> ().FirstOrDefault (d => d.IsOutput ());
+            return functionArguments.Where(o => o.GetType().IsFunc()).Cast<Delegate>().FirstOrDefault(d => d.IsOutput());
         }
 
         /// <summary>
@@ -212,13 +211,10 @@
                 throw new ArgumentException("GenericArgument not the same as TOut of the InputEditor");
 
 
-            //find the anonymous type to turn into the querystring
-#if __MonoCS__
-			var anonymousQueryObject = argList.FirstOrDefault (o => o.GetType ().Name.Contains ("AnonType"));
-#else
-			var anonymousQueryObject = argList.FirstOrDefault (o => o.GetType ().Name.Contains ("Anonymous"));
-#endif
-			IEnumerable<KeyValuePair<string, string>> queryDict = null;
+            //find the anonymous type to turn into the querystring todo: find better way to determine anonymoust type.
+            var anonymousQueryObject = argList.FirstOrDefault(o => o.GetType().Name.Contains("Anonymous")) ?? argList.FirstOrDefault(o => o.GetType().Name.Contains("AnonType"));
+	
+            IEnumerable<KeyValuePair<string, string>> queryDict = null;
             if (anonymousQueryObject != null)
                 queryDict = QueryStringResolver.ResolveQueryDict(binderName, anonymousQueryObject);
             
@@ -249,8 +245,7 @@
                     sortedArgs.Add(argList.TakeNthOccurence(o=>o.GetType().Name == type, typeOrderDict[outputEditorArgumentsType]));
                 }
 #if !__MonoCS__
-                retval.Payload = (Request)retval.OutputEditor.FastDynamicInvoke (sortedArgs.ToArray ()); /* FastDynamicInvoke wants an
-                																					      * array */
+                retval.Payload = (Request)retval.OutputEditor.FastDynamicInvoke (sortedArgs.ToArray ()); 
 #else
 				retval.Payload = (Request)retval.OutputEditor.DynamicInvoke(sortedArgs.ToArray());
 #endif
@@ -265,7 +260,7 @@
 
 
             //find url parameters
-            retval.UrlParameters = argList.Where (o => !o.GetType ().Name.Contains ("Func`")) //no funcs
+            retval.UrlParameters = argList.Where (o => !(o.GetType ().IsFunc())) //no funcs
                                           .Where (o => o != argList.FirstOrDefault(ob => ob.GetType().Name.Contains("Anonymous") || ob.GetType().Name.Contains ("AnonType"))) //not the first anonymous object
                                           .Where (o => !sortedArgs.Contains (o)) //no output editor arguments
                                           .ToArray ();

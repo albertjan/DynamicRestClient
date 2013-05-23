@@ -7,6 +7,22 @@ namespace DRC
 {
     public static class Extensions
     {
+        private static readonly HashSet<Type> Set = new HashSet<Type>
+        {
+            typeof(Func<>),typeof(Func<,>),typeof(Func<,,>),typeof(Func<,,,>),typeof(Func<,,,,>),typeof(Func<,,,,,>),typeof(Func<,,,,,,>),typeof(Func<,,,,,,,>),typeof(Func<,,,,,,,,>),typeof(Func<,,,,,,,,,>),typeof(Func<,,,,,,,,,,>),typeof(Func<,,,,,,,,,,,>),typeof(Func<,,,,,,,,,,,,>),typeof(Func<,,,,,,,,,,,,,>),typeof(Func<,,,,,,,,,,,,,,>),typeof(Func<,,,,,,,,,,,,,,,>),typeof(Func<,,,,,,,,,,,,,,,,>)
+        };
+        
+        public static bool IsFunc(this Type type, int minimalNumberOfTypeArguments = 1)
+        {
+            return (Set.Contains(type) || (type.IsGenericType && Set.Contains(type.GetGenericTypeDefinition())));
+        }
+
+        public static bool IsFunc(this Delegate fDelegate, int minimalNumberOfTypeArguments = 1)
+        {
+            var type = fDelegate.GetType();
+            return (Set.Contains(type) || (type.IsGenericType && Set.Contains(type.GetGenericTypeDefinition())));
+        }
+
         public static Dictionary<string, string[]> ToDictionary(this WebHeaderCollection headers)
         {
             var dict = new Dictionary<string, string[]>();
@@ -36,13 +52,13 @@ namespace DRC
 
         public static bool IsInput (this Delegate inputDelegate)
         {
-            return (inputDelegate.GetType ().Name.Contains ("Func") &&
+            return (inputDelegate.IsFunc() &&
                     inputDelegate.GetType ().GetGenericArguments ().First () == typeof (Response));
         }
 
         public static bool IsOutput (this Delegate outputDelegate)
         {
-            return (outputDelegate.GetType ().Name.Contains ("Func") &&
+            return (outputDelegate.IsFunc() &&
                     outputDelegate.GetType ().GetGenericArguments ().Last () == typeof (Request));
         }
 
