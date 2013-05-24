@@ -49,6 +49,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ApplicationRegistar.cs" />
+    <Compile Include="BodySerializers\BodySerializerRegistration.cs" />
+    <Compile Include="BodySerializers\JsonBodySerializer.cs" />
+    <Compile Include="BodySerializers\XmlBodySerializer.cs" />
     <Compile Include="ClientCertificateParameters.cs" />
     <Compile Include="Defaults\DefaultNounResolver.cs" />
     <Compile Include="Defaults\DefaultQueryStringResolver.cs" />
@@ -56,6 +60,8 @@
     <Compile Include="Defaults\DefaultUriComposer.cs" />
     <Compile Include="Defaults\DefaultVerbResolver.cs" />
     <Compile Include="Extensions.cs" />
+    <Compile Include="IApplicationRegistration.cs" />
+    <Compile Include="Interfaces\IBodySerializer.cs" />
     <Compile Include="Interfaces\INounResolver.cs" />
     <Compile Include="Interfaces\IQueryStringResolver.cs" />
     <Compile Include="Interfaces\IStringTokenizer.cs" />
@@ -73,6 +79,7 @@
     <None Include="DRC.nuspec" />
     <None Include="packages.config" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="$(SolutionDir)\.nuget\nuget.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

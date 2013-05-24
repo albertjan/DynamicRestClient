@@ -18,7 +18,7 @@
         string EchoTest(object paramters);
     }
 
-    public class FlickrAppRegistrations : IApplicationRegistrations
+    public class FlickrAppRegistration : IApplicationRegistration
     {
         public IEnumerable<TypeRegistration> TypeRegistrations 
         { 
@@ -36,6 +36,8 @@
         {
             get { return Enumerable.Empty<InstanceRegistration>(); }
         }
+
+        public IEnumerable<CollectionRegistration> CollectionRegistration { get { return Enumerable.Empty<CollectionRegistration>(); } }
     }
 
     class Program

@@ -23,6 +23,15 @@ namespace DRC
             return (Set.Contains(type) || (type.IsGenericType && Set.Contains(type.GetGenericTypeDefinition())));
         }
 
+        public static bool Implements(this Type type, Type implementedInterface)
+        {
+            if (implementedInterface.IsInterface)
+            {
+                return type.GetInterfaces().Contains(implementedInterface);
+            }
+            throw new ArgumentException("Must be an interface", "implementedInterface");
+        }
+
         public static Dictionary<string, string[]> ToDictionary(this WebHeaderCollection headers)
         {
             var dict = new Dictionary<string, string[]>();

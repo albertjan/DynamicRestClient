@@ -44,41 +44,30 @@
         public IVerbResolver VerbResolver { get; set; }
         public IStringTokenizer StringTokenizer { get; set; }
         public IUriComposer UriComposer { get; set; }
+
+        public IEnumerable<IBodySerializer> Serializers { get; set; } 
         public string Url { get; set; }
 
         public RESTClient(TinyIoCContainer container = null)
         {
             if (container == null)
             {
-                Container = new TinyIoCContainer();
+                Container = new TinyIoCContainer(); 
+                ApplicationRegistar.ProcessRegistrations(Container);
                 Container.AutoRegister();
             }
             else
             {
                 Container = container;
+                ApplicationRegistar.ProcessRegistrations(Container);
             }
             
-            IApplicationRegistrations applicationRegistration;
-
-            if (Container.TryResolve(out applicationRegistration))
-            {
-
-                foreach (var typeRegistration in applicationRegistration.TypeRegistrations)
-                {
-                    Container.Register(typeRegistration.RegistrationType, typeRegistration.InstanceType);
-                }
-
-                foreach (var instanceRegistration in applicationRegistration.InstanceRegistrations)
-                {
-                    Container.Register(instanceRegistration.RegistrationType, instanceRegistration.Instance);
-                }
-            }
-
             StringTokenizer = Container.Resolve<IStringTokenizer>();
             NounResolver = Container.Resolve<INounResolver>();
             QueryStringResolver = Container.Resolve<IQueryStringResolver>();
             VerbResolver = Container.Resolve<IVerbResolver>();
             UriComposer = Container.Resolve<IUriComposer>();
+            Serializers = Container.ResolveAll<IBodySerializer>();
 
             //create input pipeline and store response
             InputPipeLine = new Dictionary<double, Tuple<string, Action<Response>>>();
@@ -270,19 +259,14 @@
         // ReSharper disable UnusedMember.Local
         private T GetDeserializationMethod<T>(Response ofT)
         {
-            if (ofT.ContentType == "application/json")
+            foreach (var bodySerializer in Serializers)
             {
-                using (var sr = new StreamReader (ofT.ResponseStream))
+                if (bodySerializer.CanHandle(ofT.ContentType))
                 {
-                    return SimpleJson.DeserializeObject<T> (sr.ReadToEnd ());
-                }    
+                    return bodySerializer.Deserialize<T>(ofT.ResponseStream);
+                }
             }
 
-            if (ofT.ContentType == "application/xml" || ofT.ContentType.StartsWith("text/xml"))
-            {
-                return (T)new XmlSerializer(typeof(T)).Deserialize(ofT.ResponseStream);
-            } 
-           
             throw new Exception("Can't Deserialise (" + ofT.ContentType + ")");
         }
         // ReSharper restore UnusedMember.Local
@@ -505,27 +489,6 @@
                 }
             }
         }
-    }
-
-    public interface IApplicationRegistrations
-    {
-        IEnumerable<TypeRegistration> TypeRegistrations { get; }
-        IEnumerable<InstanceRegistration> InstanceRegistrations { get; }
-    }
-    
-    public abstract class Registration
-    {
-        public Type RegistrationType { get; set; }
-    }
-
-    public class TypeRegistration : Registration
-    {
-        public Type InstanceType { get; set; }        
-    }
-
-    public class InstanceRegistration : Registration
-    {
-        public object Instance { get; set; }
     }
 
     public class EditorDelegateException : Exception

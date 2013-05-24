@@ -407,7 +407,6 @@
             Assert.AreEqual(typeof (AModel), a.GetType());
         }
 
-
         [Test]
         public void ShouldBeAbleToDeserializeAGuid()
         {
