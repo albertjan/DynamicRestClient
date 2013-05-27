@@ -41,7 +41,6 @@
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Resolvers\FlickrNounResolver.cs" />
-    <Compile Include="Resolvers\FlickrQueryStringResolver.cs" />
     <Compile Include="Resolvers\FlickrVerbResolver.cs" />
     <Compile Include="userinfo.cs" />
   </ItemGroup>

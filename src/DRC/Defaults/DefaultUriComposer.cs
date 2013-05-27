@@ -7,8 +7,17 @@
     
     public class DefaultUriComposer : IUriComposer
     {
-        public string ComposeUri(string baseUri, string location, object[] functionParameters, IEnumerable<KeyValuePair<string, string>> queryDictionary)
+        private readonly IQueryStringResolver _queryStringResolver;
+
+        public DefaultUriComposer(IQueryStringResolver queryStringResolver)
         {
+            _queryStringResolver = queryStringResolver;
+        }
+
+        public string ComposeUri(string baseUri, string location, object[] functionParameters, object query)
+        {
+            var queryDictionary = _queryStringResolver.ResolveQueryDict(query);
+
             //Part 1 the basics http://thing.com/base/ + the nouns "/test"
             string part1;
             if (location.StartsWith("http"))

@@ -5,6 +5,6 @@
 
     public interface IUriComposer
     {
-        string ComposeUri(string baseUri, string location, object[] functionParameters, IEnumerable<KeyValuePair<string, string>> queryDictionary);
+        string ComposeUri(string baseUri, string location, object[] functionParameters, object query);
     }
 }

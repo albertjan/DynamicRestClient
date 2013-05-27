@@ -7,12 +7,12 @@
     using System.Linq;
     using System.Net;
     using System.Reflection;
-    using System.Xml.Serialization;
     using System.Security.Cryptography;
     using System.Security.Cryptography.X509Certificates;
-
+    
     using TinyIoC;
     using Interfaces;
+
 #if !__MonoCS__
     using ImpromptuInterface;
 #endif
@@ -35,19 +35,13 @@
     /// </summary>
     public class RESTClient: DynamicObject 
     {
-        private readonly Dictionary<string, List<Delegate>> _editorDelegates = new Dictionary<string, List<Delegate>> ();
-
         public TinyIoCContainer Container { get; set; }
 
-        public INounResolver NounResolver { get; set; }
-        public IQueryStringResolver QueryStringResolver { get; set; }
-        public IVerbResolver VerbResolver { get; set; }
-        public IStringTokenizer StringTokenizer { get; set; }
-        public IUriComposer UriComposer { get; set; }
-
-        public IEnumerable<IBodySerializer> Serializers { get; set; } 
         public string Url { get; set; }
 
+        private IUriComposer UriComposer { get; set; }
+        private IEnumerable<IBodySerializer> Serializers { get; set; } 
+        
         public RESTClient(TinyIoCContainer container = null)
         {
             if (container == null)
@@ -62,13 +56,6 @@
                 ApplicationRegistar.ProcessRegistrations(Container);
             }
             
-            StringTokenizer = Container.Resolve<IStringTokenizer>();
-            NounResolver = Container.Resolve<INounResolver>();
-            QueryStringResolver = Container.Resolve<IQueryStringResolver>();
-            VerbResolver = Container.Resolve<IVerbResolver>();
-            UriComposer = Container.Resolve<IUriComposer>();
-            Serializers = Container.ResolveAll<IBodySerializer>();
-
             //create input pipeline and store response
             InputPipeLine = new Dictionary<double, Tuple<string, Action<Response>>>();
             OutputPipeLine = new Dictionary<double, Tuple<string, Action<Request>>>();
@@ -99,7 +86,7 @@
         /// <returns></returns>
         public override bool TryGetMember (GetMemberBinder binder, out object result)
         {
-            result = new InputOutputEditorSetters (binder.Name, _editorDelegates, NounResolver);
+            result = Container.Resolve<InputOutputEditorSetters>(new NamedParameterOverloads { { "binderName", binder.Name } });
             return true;
         }
 
@@ -116,7 +103,7 @@
 #if !__MonoCS__
 			var typeArgs = Impromptu.InvokeGet(binder, "Microsoft.CSharp.RuntimeBinder.ICSharpInvokeOrInvokeMemberBinder.TypeArguments")
 				as IList<Type>;
-			var typeArg = typeArgs.FirstOrDefault();
+			var typeArg = typeArgs == null ? null : typeArgs.FirstOrDefault();
 #else
 			var csharpBinder = binder.GetType().GetField("typeArguments", BindingFlags.NonPublic | BindingFlags.Instance);
 
@@ -124,14 +111,14 @@
 			var typeArg = typeArgs == null ? null : typeArgs.FirstOrDefault();
 #endif
             //Mangle the function name into nouns and verbs
-            var noun = NounResolver.ResolveNoun (binder.Name);
-            var verb = VerbResolver.ResolveVerb (binder.Name);
+            var noun = Container.Resolve<INounResolver>().ResolveNoun (binder.Name);
+            var verb = Container.Resolve<IVerbResolver>().ResolveVerb (binder.Name);
             
             var doCallParameters = GetDoCallParameters(typeArg, binder.Name, args);
             
             //dynamicly call a generic function
             var method = GetType().GetMethod("DoCall").MakeGenericMethod(doCallParameters.GenericTypeArgument);
-            result = method.Invoke (this, new object[] { verb, noun, doCallParameters.QueryDict, doCallParameters.InputEditor, doCallParameters.UrlParameters, doCallParameters.Payload });
+            result = method.Invoke (this, new [] { verb, noun, doCallParameters.QueryDict, doCallParameters.InputEditor, doCallParameters.UrlParameters, doCallParameters.Payload });
 
             return true;
         }
@@ -171,13 +158,13 @@
             //find the input and output editors if specified. or use the defaults.
             var retval = new CallMethodAgruments
             {
-                InputEditor = (_editorDelegates.ContainsKey(binderName) &&
-                            _editorDelegates[binderName].FirstOrDefault(d => d.IsInput()) != null)
-                                ? _editorDelegates[binderName].First(d => d.IsInput())
+                InputEditor = (InputOutputEditorSetters.EditorDelegates.ContainsKey(binderName) &&
+                            InputOutputEditorSetters.EditorDelegates[binderName].FirstOrDefault(d => d.IsInput()) != null)
+                                ? InputOutputEditorSetters.EditorDelegates[binderName].First(d => d.IsInput())
                                 : new Func<Response, Response>(s => (dynamic)s),
-                OutputEditor = (_editorDelegates.ContainsKey(binderName) &&
-                                _editorDelegates[binderName].FirstOrDefault(d => d.IsOutput()) != null)
-                                ? _editorDelegates[binderName].First(d => d.IsOutput())
+                OutputEditor = (InputOutputEditorSetters.EditorDelegates.ContainsKey(binderName) &&
+                                InputOutputEditorSetters.EditorDelegates[binderName].FirstOrDefault(d => d.IsOutput()) != null)
+                                ? InputOutputEditorSetters.EditorDelegates[binderName].First(d => d.IsOutput())
                                 : new Func<Request>(() => new Request())
             };
 
@@ -203,11 +190,7 @@
             //find the anonymous type to turn into the querystring todo: find better way to determine anonymoust type.
             var anonymousQueryObject = argList.FirstOrDefault(o => o.GetType().Name.Contains("Anonymous")) ?? argList.FirstOrDefault(o => o.GetType().Name.Contains("AnonType"));
 	
-            IEnumerable<KeyValuePair<string, string>> queryDict = null;
-            if (anonymousQueryObject != null)
-                queryDict = QueryStringResolver.ResolveQueryDict(binderName, anonymousQueryObject);
-            
-            retval.QueryDict = queryDict;
+            retval.QueryDict = anonymousQueryObject;
 
             //outputeditorargumentselection and payload generation empty request
             if (retval.OutputEditor.GetType().GetGenericArguments().First() == typeof(byte[]))
@@ -259,7 +242,15 @@
         // ReSharper disable UnusedMember.Local
         private T GetDeserializationMethod<T>(Response ofT)
         {
-            foreach (var bodySerializer in Serializers)
+            if (typeof(T) == typeof(string))
+            {
+                using (var sw = new StreamReader(ofT.ResponseStream))
+                {
+                    return (T)((object)sw.ReadToEnd());
+                }
+            }
+
+            foreach (var bodySerializer in Container.ResolveAll<IBodySerializer>().ToList())
             {
                 if (bodySerializer.CanHandle(ofT.ContentType))
                 {
@@ -273,14 +264,20 @@
 
         public T DoCall<T> (Verb callMethod, 
                             string site, 
-                            IEnumerable<KeyValuePair<string, string>> queryString, 
+                            object queryString, 
                             Func<Response, T> editor, 
                             object[] urlParameters = null, 
                             Request what = null)
         {
             if (what == null) what = new Request();
 
-            what.Uri = what.Uri ?? UriComposer.ComposeUri(Url, site, urlParameters, queryString);
+            what.Uri = what.Uri ?? Container.Resolve<IUriComposer>().ComposeUri(Url, site, urlParameters, queryString);
+
+            //call output pipelinebefore writing body (httpwebrequest will send the body immediatly
+            foreach (var pipelineItem in OutputPipeLine.OrderBy(p => p.Key))
+            {
+                pipelineItem.Value.Item2(what);
+            }
 
             var wr = WebRequest.Create(what.Uri);
             wr.Method = callMethod.ToString();
@@ -293,13 +290,7 @@
                 if (certs.Count == 0) throw new CryptographicException("No certificates found.");
                 ((HttpWebRequest) wr).ClientCertificates.AddRange(certs);
             }
-
-            //call output pipelinebefore writing body (httpwebrequest will send the body immediatly
-            foreach (var pipelineItem in OutputPipeLine.OrderBy(p => p.Key))
-            {
-                pipelineItem.Value.Item2(what);
-            }
-
+            
             if (what.Headers.Count != 0)
             {
                 foreach (var header in what.Headers)
@@ -410,7 +401,7 @@
             public Type GenericTypeArgument { get; set; }
             public Delegate InputEditor { get; set; }
             public Delegate OutputEditor { get; set; }
-            public IEnumerable<KeyValuePair<string, string>> QueryDict { get; set; }
+            public object QueryDict { get; set; }
             public object[] UrlParameters { get; set; }
             public Request Payload { get; set; }
         }
@@ -425,18 +416,17 @@
         /// </summary>
         public class InputOutputEditorSetters
         {
-            public string BinderName { get; set; }
-            public Dictionary<string, List<Delegate>> EditorDelegates { get; set; }
-            public List<Delegate> CurrentEditorDelegates { get; set; }
-            public INounResolver NounResolver { get; set; }
+            private string BinderName { get; set; }
+            public static readonly Dictionary<string, List<Delegate>> EditorDelegates = new Dictionary<string, List<Delegate>>();
+            private List<Delegate> CurrentEditorDelegates { get; set; }
+            private INounResolver NounResolver { get; set; }
 
-            public InputOutputEditorSetters(string binderName, Dictionary<string, List<Delegate>> editorDelegates, INounResolver nounResolver)
+            public InputOutputEditorSetters(INounResolver nounResolver, string binderName)
             {
-                if (!editorDelegates.ContainsKey(binderName))
-                    editorDelegates.Add(binderName, new List<Delegate>());
+                if (!EditorDelegates.ContainsKey(binderName))
+                    EditorDelegates.Add(binderName, new List<Delegate>());
 
                 BinderName = binderName;
-                EditorDelegates = editorDelegates;
                 NounResolver = nounResolver;
                 CurrentEditorDelegates = EditorDelegates[BinderName];
             }

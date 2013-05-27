@@ -1,7 +1,6 @@
 ﻿namespace DRC.Test
 {
     using System;
-    using System.Collections.Generic;
     using System.IO;
     using System.Linq;
     using System.Net;
@@ -12,8 +11,6 @@
     using Defaults;
     using Interfaces;
  
-    using TinyIoC;
-
     using NUnit.Framework;
 
     [TestFixture]
@@ -23,12 +20,8 @@
         public void Init()
         {
             WebRequest.RegisterPrefix("test", new TestWebRequestCreate());
-            Container = new TinyIoC.TinyIoCContainer();
-            Container.AutoRegister();
-            Container.Register<IUriComposer>(new DefaultUriComposer());
+            RESTClient.InputOutputEditorSetters.EditorDelegates.Clear();
         }
-
-        public TinyIoCContainer Container { get; set; }
 
         [Test]
         public void InputAndOutputExtensionsMethodTest()
@@ -175,7 +168,8 @@
         {
             TestWebRequestCreate.CreateTestRequest("dummy");
 
-            dynamic me = new RESTClient(Container);
+            dynamic me = new RESTClient();
+            me.Container.Register(typeof(IUriComposer), typeof(DefaultUriComposer));
             me.Url = "test://base";
             me.GetTest.In = new Func<Response, Stream>(r =>
             {
@@ -227,7 +221,9 @@
         {
             TestWebRequestCreate.CreateTestRequest("dummy");
 
-            dynamic me = new RESTClient(Container);
+            dynamic me = new RESTClient();
+            me.Container.Register(typeof (IUriComposer), typeof (DefaultUriComposer));
+
             me.Url = "test://base";
 
             var result = me.GetTest<string>( 
@@ -383,6 +379,19 @@
             Assert.AreEqual(typeof(AModel), a.GetType());
         }
 
+        [Test] public void ShouldReturnTheContentsAsAStringWhenConvertedToOneEvenIfTheContentTypeIsSerialiazble()
+        {
+            var test =
+                TestWebRequestCreate.CreateTestRequest(
+                    SimpleJson.SerializeObject(new AModel { D = 0.1, I = 1, L = 2, S = "s" }));
+            test.ContentType = "application/json";
+            dynamic me = new RESTClient();
+            me.Url = "test://test";
+            string a = me.GetTest();
+
+            //Assert.AreEqual(typeof(AModel), a.GetType());
+        }
+
 
         [Test]
         public void ShouldTryToDeserializeXMLToGenericTypeArgument()
@@ -434,9 +443,7 @@
         {
             TestWebRequestCreate.CreateTestRequest ("dummy");
 
-            Container.Register<IUriComposer>(new AlternativeUriComposer());
-
-            dynamic me = new RESTClient (Container);
+            dynamic me = new RESTClient ();
             me.Url = "test://base";
             me.GetTest.In = new Func<Response, Stream> (r =>
             {
@@ -481,8 +488,17 @@
     /// </summary>
     public class AlternativeUriComposer : IUriComposer
     {
-        public string ComposeUri(string baseUri, string location, object[] functionParameters, IEnumerable<KeyValuePair<string, string>> queryDictionary)
+        private readonly IQueryStringResolver _queryStringResolver;
+
+        public AlternativeUriComposer(IQueryStringResolver queryStringResolver)
         {
+            _queryStringResolver = queryStringResolver;
+        }
+
+        public string ComposeUri(string baseUri, string location, object[] functionParameters, object query)
+        {
+            var queryDictionary = _queryStringResolver.ResolveQueryDict(query);
+
             //Part 1 the basics http://thing.com/base/ + the nouns "/test"
             var part1 = (baseUri != null ? baseUri + "/" : "") + location;
             //Part 2 the parameters passed to the function call that aren't needed for the

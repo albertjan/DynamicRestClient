@@ -7,14 +7,14 @@ namespace DRC.Defaults
 
     public class DefaultQueryStringResolver : IQueryStringResolver
     {
-        public IStringTokenizer Tokenizer { get; set; }
+        private IStringTokenizer Tokenizer { get; set; }
 
         public DefaultQueryStringResolver(IStringTokenizer tokenizer)
         {
             Tokenizer = tokenizer;
         }
 
-        public IEnumerable<KeyValuePair<string, string>> ResolveQueryDict (string functionName, object anonymousQueryObject)
+        public IEnumerable<KeyValuePair<string, string>> ResolveQueryDict (object anonymousQueryObject)
         {
             var props = TypeDescriptor.GetProperties (anonymousQueryObject);
             foreach (PropertyDescriptor prop in props)
