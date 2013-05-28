@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>DRC</id>
-    <version>0.0.0.6</version>
+    <version>0.0.0.7</version>
     <title>A Dynamic REST Client</title>
     <authors>Albert-Jan Nijburg</authors>
     <owners>Albert-Jan Nijburg</owners>
@@ -11,7 +11,7 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>A Client for calling RESTFull API's without writing too much fluf.</description>
     <releaseNotes>
-      Adds the capability to add a client certificate to the RESTClient. Adds implicit type conversion, it will automatically try to deserialise to the type of the variable that the result is put into. Initialises the headers dictionary on the request object. Adds checks on the output and input editors. Returns it's own Response instead of the WebResponse.
+      Strings things toghether with TinyIOC and ads to posibility to change the serializers.
     </releaseNotes>
     <copyright>Copyright Albert-Jan Nijburg 2012</copyright>
     <tags>DRC REST http</tags>
