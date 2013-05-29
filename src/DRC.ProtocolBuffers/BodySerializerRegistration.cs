@@ -1,10 +1,10 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using DRC.BodySerializers;
-using DRC.Interfaces;
-
-namespace DRC.ProtocolBuffers
+﻿namespace DRC.ProtocolBuffers
 {
+    using System.Collections.Generic;
+    using System.Linq;
+
+    using DRC.Interfaces;
+
     public class BodySerializerRegistration : IApplicationRegistration
     {
         public IEnumerable<TypeRegistration> TypeRegistrations { get { return Enumerable.Empty<TypeRegistration>(); } }
@@ -20,7 +20,7 @@ namespace DRC.ProtocolBuffers
                     new CollectionRegistration()
                     {
                         RegistrationType = typeof (IBodySerializer),
-                        InstaceTypes = new[] {typeof (ProtocolBuffersBodySerializer)}
+                        InstanceTypes = new[] {typeof (ProtocolBuffersBodySerializer)}
                     }
                 };
             } 

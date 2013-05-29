@@ -1,7 +1,7 @@
-using System.Security.Cryptography.X509Certificates;
-
 namespace DRC
 {
+    using System.Security.Cryptography.X509Certificates;
+
     public class ClientCertificateParameters
     {
         public string FindString { get; set; }

@@ -1,22 +1,24 @@
 ﻿namespace DRC.Defaults
 {
     using System.Linq;
-    using System.Collections.Generic;
-
+    
     using DRC.Interfaces;
     
     public class DefaultUriComposer : IUriComposer
     {
         private readonly IQueryStringResolver _queryStringResolver;
+        private readonly INounResolver _nounResolver;
 
-        public DefaultUriComposer(IQueryStringResolver queryStringResolver)
+        public DefaultUriComposer(IQueryStringResolver queryStringResolver, INounResolver nounResolver)
         {
             _queryStringResolver = queryStringResolver;
+            _nounResolver = nounResolver;
         }
 
-        public string ComposeUri(string baseUri, string location, object[] functionParameters, object query)
+        public string ComposeUri(string baseUri, string functionName, object[] functionParameters, object query)
         {
-            var queryDictionary = _queryStringResolver.ResolveQueryDict(query);
+            var queryDictionary = _queryStringResolver.ResolveQueryDict(query, functionName);
+            var location = _nounResolver.ResolveNoun(functionName);
 
             //Part 1 the basics http://thing.com/base/ + the nouns "/test"
             string part1;

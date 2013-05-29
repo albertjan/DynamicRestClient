@@ -1,9 +1,10 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using DRC.Interfaces;
-
-namespace DRC.BodySerializers
+﻿namespace DRC.BodySerializers
 {
+    using System.Collections.Generic;
+    using System.Linq;
+    
+    using DRC.Interfaces;
+
     public class BodySerializerRegistration : IApplicationRegistration
     {
         public IEnumerable<TypeRegistration> TypeRegistrations { get { return Enumerable.Empty<TypeRegistration>(); } }
@@ -19,7 +20,7 @@ namespace DRC.BodySerializers
                     new CollectionRegistration()
                     {
                         RegistrationType = typeof (IBodySerializer),
-                        InstaceTypes = new[] {typeof (JsonBodySerializer), typeof (XmlBodySerializer)}
+                        InstanceTypes = new[] {typeof (JsonBodySerializer), typeof (XmlBodySerializer)}
                     }
                 };
             } 

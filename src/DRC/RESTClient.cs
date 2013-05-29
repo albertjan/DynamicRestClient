@@ -111,14 +111,14 @@
 			var typeArg = typeArgs == null ? null : typeArgs.FirstOrDefault();
 #endif
             //Mangle the function name into nouns and verbs
-            var noun = Container.Resolve<INounResolver>().ResolveNoun (binder.Name);
+            //var noun = Container.Resolve<INounResolver>().ResolveNoun (binder.Name);
             var verb = Container.Resolve<IVerbResolver>().ResolveVerb (binder.Name);
             
             var doCallParameters = GetDoCallParameters(typeArg, binder.Name, args);
             
             //dynamicly call a generic function
             var method = GetType().GetMethod("DoCall").MakeGenericMethod(doCallParameters.GenericTypeArgument);
-            result = method.Invoke (this, new [] { verb, noun, doCallParameters.QueryDict, doCallParameters.InputEditor, doCallParameters.UrlParameters, doCallParameters.Payload });
+            result = method.Invoke (this, new [] { verb, binder.Name, doCallParameters.QueryDict, doCallParameters.InputEditor, doCallParameters.UrlParameters, doCallParameters.Payload });
 
             return true;
         }
@@ -185,17 +185,9 @@
 
             if (typeArg != null && retval.InputEditor.GetType().GetGenericArguments().Last() != typeArg)
                 throw new ArgumentException("GenericArgument not the same as TOut of the InputEditor");
-
-
+            
             //find the anonymous type to turn into the querystring todo: find better way to determine anonymoust type.
-            var anonymousQueryObject = argList.FirstOrDefault(o => o.GetType().Name.Contains("Anonymous")) ?? argList.FirstOrDefault(o => o.GetType().Name.Contains("AnonType"));
-	
-            retval.QueryDict = anonymousQueryObject;
-
-            //outputeditorargumentselection and payload generation empty request
-            if (retval.OutputEditor.GetType().GetGenericArguments().First() == typeof(byte[]))
-                if (argList.FirstOrDefault(o => o is byte[]) == null)
-                    argList.Add(new byte[0]);
+            retval.QueryDict = argList.FirstOrDefault(o => o.GetType().Name.Contains("Anonymous")) ?? argList.FirstOrDefault(o => o.GetType().Name.Contains("AnonType"));
 
             //get the types from the outputeditor delegate arguments haal except the last which is the output type (byte[])
             var outputEditorArgumentsTypes = retval.OutputEditor.GetType().GetGenericArguments().SkipLastN(1);
@@ -263,7 +255,7 @@
         // ReSharper restore UnusedMember.Local
 
         public T DoCall<T> (Verb callMethod, 
-                            string site, 
+                            string functionName, 
                             object queryString, 
                             Func<Response, T> editor, 
                             object[] urlParameters = null, 
@@ -271,7 +263,7 @@
         {
             if (what == null) what = new Request();
 
-            what.Uri = what.Uri ?? Container.Resolve<IUriComposer>().ComposeUri(Url, site, urlParameters, queryString);
+            what.Uri = what.Uri ?? Container.Resolve<IUriComposer>().ComposeUri(Url, functionName, urlParameters, queryString);
 
             //call output pipelinebefore writing body (httpwebrequest will send the body immediatly
             foreach (var pipelineItem in OutputPipeLine.OrderBy(p => p.Key))
@@ -404,11 +396,6 @@
             public object QueryDict { get; set; }
             public object[] UrlParameters { get; set; }
             public Request Payload { get; set; }
-        }
-
-        public interface ITypeArguments
-        {
-            IList<Type> m_typeArguments { get; }
         }
 
         /// <summary>

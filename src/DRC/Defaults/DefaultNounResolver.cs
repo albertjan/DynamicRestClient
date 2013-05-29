@@ -20,7 +20,7 @@ namespace DRC.Defaults
         {
             if (PredefinedUrls.ContainsKey(naaca)) return PredefinedUrls[naaca];
             
-            var tokens = Tokenizer.GetTokens (naaca).ToList();
+            var tokens = Tokenizer.GetTokens (naaca).Select(s => s.ToLower()).ToList();
             
             return tokens.Count > 1
                        ? tokens.Skip(1).Aggregate((s1, s2) => s1 + "/" + s2)

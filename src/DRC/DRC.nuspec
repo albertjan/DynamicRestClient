@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>DRC</id>
-    <version>0.0.0.7</version>
+    <version>0.0.0.8</version>
     <title>A Dynamic REST Client</title>
     <authors>Albert-Jan Nijburg</authors>
     <owners>Albert-Jan Nijburg</owners>

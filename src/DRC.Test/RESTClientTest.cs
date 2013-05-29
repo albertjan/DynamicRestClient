@@ -273,12 +273,15 @@
 
             dynamic me = new RESTClient();
             me.Url = "test://base";
+            var check = false;
             me.GetMultipleNounTest.In = new Func<Response, string>(w =>
             {
                 Assert.AreEqual(new Uri("test://base/multiple/noun/test"), w.ResponseUri);
+                check = true;
                 return "yes";
             });
-            me.GetMultipleNounsTest();
+            me.GetMultipleNounTest();
+            Assert.IsTrue(check);
         }
 
         [Test]
@@ -379,7 +382,8 @@
             Assert.AreEqual(typeof(AModel), a.GetType());
         }
 
-        [Test] public void ShouldReturnTheContentsAsAStringWhenConvertedToOneEvenIfTheContentTypeIsSerialiazble()
+        [Test] 
+        public void ShouldReturnTheContentsAsAStringWhenConvertedToOneEvenIfTheContentTypeIsSerialiazble()
         {
             var test =
                 TestWebRequestCreate.CreateTestRequest(
@@ -389,7 +393,8 @@
             me.Url = "test://test";
             string a = me.GetTest();
 
-            //Assert.AreEqual(typeof(AModel), a.GetType());
+            Assert.AreEqual(typeof(string), a.GetType());
+            Assert.AreEqual("{\"I\":1,\"S\":\"s\",\"L\":2,\"D\":0.1}", a);
         }
 
 
@@ -489,27 +494,30 @@
     public class AlternativeUriComposer : IUriComposer
     {
         private readonly IQueryStringResolver _queryStringResolver;
+        private readonly INounResolver _nounResolver;
 
-        public AlternativeUriComposer(IQueryStringResolver queryStringResolver)
+        public AlternativeUriComposer(IQueryStringResolver queryStringResolver, INounResolver nounResolver)
         {
             _queryStringResolver = queryStringResolver;
+            _nounResolver = nounResolver;
         }
 
-        public string ComposeUri(string baseUri, string location, object[] functionParameters, object query)
+        public string ComposeUri(string baseUri, string functionName, object[] functionParameters, object query)
         {
-            var queryDictionary = _queryStringResolver.ResolveQueryDict(query);
+            var location = _nounResolver.ResolveNoun(functionName);
+            var queryDictionary = _queryStringResolver.ResolveQueryDict(query, functionName);
 
             //Part 1 the basics http://thing.com/base/ + the nouns "/test"
             var part1 = (baseUri != null ? baseUri + "/" : "") + location;
             //Part 2 the parameters passed to the function call that aren't needed for the
             //output editor.
-            var part2 = functionParameters == null || functionParameters.Count() == 0
+            var part2 = functionParameters == null || !functionParameters.Any()
                             ? ""
                             : "/" + functionParameters.Aggregate((l, r) => l + "/" + r) + "/";
             //Part 3 the querystring
             var part3 = ""; 
             
-            if (queryDictionary != null && queryDictionary.Count () > 0)
+            if (queryDictionary != null && queryDictionary.Any())
             {    
                 part3 += "?";
                 foreach (var element in queryDictionary)

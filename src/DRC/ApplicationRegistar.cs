@@ -1,8 +1,8 @@
-﻿using System;
-using System.Linq;
-
-namespace DRC
+﻿namespace DRC
 {
+    using System;
+    using System.Linq;
+
     public static class ApplicationRegistar
     {
         public static void ProcessRegistrations(TinyIoC.TinyIoCContainer container)
@@ -25,7 +25,7 @@ namespace DRC
 
             foreach (var collectionRegistration in applicationRegistrations.SelectMany(ar => ar.CollectionRegistration).GroupBy(cr => cr.RegistrationType))
             {
-                container.RegisterMultiple(collectionRegistration.Key, collectionRegistration.SelectMany(c => c.InstaceTypes));
+                container.RegisterMultiple(collectionRegistration.Key, collectionRegistration.SelectMany(c => c.InstanceTypes));
             }
         }
     }

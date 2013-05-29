@@ -1,8 +1,8 @@
-﻿using System.IO;
-using DRC.Interfaces;
-
-namespace DRC.ProtocolBuffers
+﻿namespace DRC.ProtocolBuffers
 {
+    using System.IO;
+    using DRC.Interfaces;
+
     public class ProtocolBuffersBodySerializer : IBodySerializer
     {
         public bool CanHandle(string contentType)

@@ -1,7 +1,6 @@
-using System;
-
 namespace DRC
 {
+    using System;
     using System.Collections.Generic;
 
     public interface IApplicationRegistration
@@ -13,7 +12,7 @@ namespace DRC
 
     public class CollectionRegistration : Registration
     {
-        public IEnumerable<Type> InstaceTypes { get; set; }
+        public IEnumerable<Type> InstanceTypes { get; set; }
     }
 
     public abstract class Registration

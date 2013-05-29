@@ -1,10 +1,10 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-
 namespace DRC
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Net;
+
     public static class Extensions
     {
         private static readonly HashSet<Type> Set = new HashSet<Type>
@@ -14,13 +14,12 @@ namespace DRC
         
         public static bool IsFunc(this Type type, int minimalNumberOfTypeArguments = 1)
         {
-            return (Set.Contains(type) || (type.IsGenericType && Set.Contains(type.GetGenericTypeDefinition())));
+            return (Set.Contains(type) || (type.IsGenericType && Set.Contains(type.GetGenericTypeDefinition()) && type.GetGenericArguments().Count() >= minimalNumberOfTypeArguments));
         }
 
         public static bool IsFunc(this Delegate fDelegate, int minimalNumberOfTypeArguments = 1)
         {
-            var type = fDelegate.GetType();
-            return (Set.Contains(type) || (type.IsGenericType && Set.Contains(type.GetGenericTypeDefinition())));
+            return fDelegate.GetType().IsFunc(minimalNumberOfTypeArguments);
         }
 
         public static bool Implements(this Type type, Type implementedInterface)

@@ -14,7 +14,7 @@ namespace DRC.Defaults
             Tokenizer = tokenizer;
         }
 
-        public IEnumerable<KeyValuePair<string, string>> ResolveQueryDict (object anonymousQueryObject)
+        public IEnumerable<KeyValuePair<string, string>> ResolveQueryDict (object anonymousQueryObject, string functionName)
         {
             var props = TypeDescriptor.GetProperties (anonymousQueryObject);
             foreach (PropertyDescriptor prop in props)

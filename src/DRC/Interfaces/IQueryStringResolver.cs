@@ -4,6 +4,6 @@ namespace DRC.Interfaces
     
     public interface IQueryStringResolver
     {
-        IEnumerable<KeyValuePair<string, string>> ResolveQueryDict(object anonymousQueryObject);
+        IEnumerable<KeyValuePair<string, string>> ResolveQueryDict(object anonymousQueryObject, string functionName);
     }
 }
