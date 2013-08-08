@@ -7,7 +7,7 @@
     {
         public static void ProcessRegistrations(TinyIoC.TinyIoCContainer container)
         {
-            var applicationRegistrationImplementations = AppDomain.CurrentDomain.GetAssemblies().Where(a => a.GetReferencedAssemblies().Contains(typeof(ApplicationRegistar).Assembly.FullName) ).SelectMany(t => t.GetTypes()).Where(t => t.Implements(typeof(IApplicationRegistration))).ToList();
+            var applicationRegistrationImplementations = AppDomain.CurrentDomain.GetAssemblies().Where(a => a.GetReferencedAssemblies().Contains(typeof(ApplicationRegistar).Assembly.GetName()) || a == typeof(ApplicationRegistar).Assembly).SelectMany(t => t.GetTypes()).Where(t => t.Implements(typeof(IApplicationRegistration))).ToList();
             
             container.RegisterMultiple<IApplicationRegistration>(applicationRegistrationImplementations);
             

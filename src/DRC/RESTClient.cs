@@ -46,9 +46,10 @@
         {
             if (container == null)
             {
-                Container = new TinyIoCContainer(); 
+                Container = new TinyIoCContainer();
+                
                 ApplicationRegistar.ProcessRegistrations(Container);
-                Container.AutoRegister();
+                Container.AutoRegister(AppDomain.CurrentDomain.GetAssemblies().Where(a => a.GetReferencedAssemblies().Contains(typeof(ApplicationRegistar).Assembly.GetName()) || a == typeof(ApplicationRegistar).Assembly));
             }
             else
             {
