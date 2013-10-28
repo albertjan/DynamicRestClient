@@ -49,7 +49,7 @@
                 Container = new TinyIoCContainer();
                 
                 ApplicationRegistar.ProcessRegistrations(Container);
-                Container.AutoRegister(AppDomain.CurrentDomain.GetAssemblies().Where(a => a.GetReferencedAssemblies().Contains(typeof(ApplicationRegistar).Assembly.GetName()) || a == typeof(ApplicationRegistar).Assembly));
+                Container.AutoRegister(AppDomain.CurrentDomain.GetAssemblies().Where(a => a.GetReferencedAssemblies().Any(name => name.Name == "DRC") || a == typeof(ApplicationRegistar).Assembly));
             }
             else
             {

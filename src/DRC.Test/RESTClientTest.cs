@@ -448,7 +448,10 @@
         {
             TestWebRequestCreate.CreateTestRequest ("dummy");
 
-            dynamic me = new RESTClient ();
+            var client = new RESTClient ();
+
+            dynamic me = client;
+            
             me.Url = "test://base";
             me.GetTest.In = new Func<Response, Stream> (r =>
             {
@@ -472,14 +475,21 @@
         {
             var request = TestWebRequestCreate.CreateTestRequest ("");
 
-            dynamic me = new RESTClient ();
+            var client = new RESTClient ();
+
+            //register the default URI composer because the one below automaticaly takes precedence over the default one.
+            
+            client.Container.Register(typeof (IUriComposer), typeof (DefaultUriComposer));
+            
+            dynamic me = client;
+
             me.Url = "test://base";
             me.Noun.In = new Func<Response, string> (w =>
             {
-                Assert.AreEqual (new Uri ("test://base/noun"), w.ResponseUri);
+                Assert.AreEqual (new Uri ("test://base/noun/test"), w.ResponseUri);
                 return "yes";
             });
-            me.Noun ();
+            me.Noun ("test");
             Assert.AreEqual ("GET", request.Method);
         }
     }
