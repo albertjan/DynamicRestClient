@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>DRC</id>
-    <version>0.0.0.9</version>
+    <version>0.0.0.10</version>
     <title>A Dynamic REST Client</title>
     <authors>Albert-Jan Nijburg</authors>
     <owners>Albert-Jan Nijburg</owners>
@@ -11,7 +11,7 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>A Client for calling RESTFull API's without writing too much fluf.</description>
     <releaseNotes>
-      Strings things toghether with TinyIOC and ads to posibility to change the serializers.
+      Fixes a concurency issue with the cached string tokenizer.
     </releaseNotes>
     <copyright>Copyright Albert-Jan Nijburg 2012</copyright>
     <tags>DRC REST http</tags>
