@@ -338,6 +338,20 @@
         }
 
         [Test]
+        public void ShouldBeAbleToAddAHeaderInAOutputPipeLine()
+        {
+            var req = TestWebRequestCreate.CreateTestRequest("dummy");
+            dynamic me = new RESTClient();
+            me.Url = "test://test";
+
+            me.OutputPipeLine.Add(0.002, Tuple.Create("pipelineitem", new Action<Request>(r => r.Headers.Add("Authorization", "yes"))));
+
+            me.GetTest();
+            Assert.AreEqual("yes", req.Headers["Authorization"]);
+        }
+
+
+        [Test]
         public void ShouldUseSpecifiedUrl()
         {
             TestWebRequestCreate.CreateTestRequest("dummy");
@@ -603,6 +617,8 @@
         public override string ContentType { get; set; }
         public override long ContentLength { get; set; }
 
+        public override WebHeaderCollection Headers { get; set; }
+
         public override Uri RequestUri
         {
             get
@@ -622,6 +638,7 @@
         /// with the response to return.</summary>
         public TestWebRequest (string response)
         {
+            Headers= new WebHeaderCollection();
             responseStream = new MemoryStream (Encoding.UTF8.GetBytes (response));
         }
 
@@ -629,6 +646,7 @@
         /// with the response to return.</summary>
         public TestWebRequest (int response)
         {
+            Headers = new WebHeaderCollection();
             responseStream = new MemoryStream (BitConverter.GetBytes(response));
         }
 
