@@ -5,7 +5,7 @@
 
     using DRC.Interfaces;
 
-    public class BodySerializerRegistration : IApplicationRegistration
+    public class ProtocolBuffersBodySerializerRegistration : IApplicationRegistration
     {
         public IEnumerable<TypeRegistration> TypeRegistrations { get { return Enumerable.Empty<TypeRegistration>(); } }
 

@@ -44,7 +44,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BodySerializerRegistration.cs" />
+    <Compile Include="ProtocolBuffersBodySerializerRegistration.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ProtocolBuffersBodySerializer.cs" />
   </ItemGroup>

@@ -7,6 +7,7 @@
     
     using NUnit.Framework;
     using ProtoBuf;
+    //using DRC.ProtocolBuffers;
     
     [TestFixture]
     public class ProtocolBuffersFixture
@@ -16,7 +17,7 @@
         {
             WebRequest.RegisterPrefix("test", new TestWebRequestCreate());
 
-            ProtocolBuffersBodySerializer p;
+            new ProtocolBuffersBodySerializer();
         }
 
         [Test]
