@@ -366,8 +366,13 @@
             try
             {
                 resp = wr.GetResponse();
-            }catch(WebException e)
+            }
+            catch(WebException e)
             {
+                // rethrow exception when no response exists
+                if (e.Response == null) 
+                    throw e;
+                // otherwise return response contained in exception
                 resp = e.Response;
             }
             // ReSharper restore EmptyGeneralCatchClause
