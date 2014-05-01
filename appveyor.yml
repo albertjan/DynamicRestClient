@@ -5,9 +5,4 @@ assembly_info:
   assembly_version: {version}
   assembly_file_version: {version}
   assembly_informational_version: {version}
-deploy:
-  provider: NuGet
-  api_key:
-    secure: 3wNw5fgR9AijBrl+mlV/rX6y6o25FofnKGnAsH6O6LbTWjkugNa4WTJddYg2toIN
-  artifact: src\DRC\DRC.*\.nupkg
 configuration: Release
