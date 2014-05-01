@@ -1,6 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2012
+# Visual Studio 2013
+VisualStudioVersion = 12.0.30110.0
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DRC", "DRC\DRC.csproj", "{1954CF8D-F38F-4A67-A79F-97E1DFF4626E}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DRC.Test", "DRC.Test\DRC.Test.csproj", "{11A164F3-71CB-4F03-8D1D-4CA434944427}"
@@ -17,6 +19,12 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DRC.ProtocolBuffers", "DRC.ProtocolBuffers\DRC.ProtocolBuffers.csproj", "{9D228596-862B-41D9-BDA0-86FFBA2352E3}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DRC.ProtocolBuffers.Tests", "DRC.ProtocolBuffers.Tests\DRC.ProtocolBuffers.Tests.csproj", "{B8137CC8-388A-466C-A70C-AC9B7BEAECF2}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{B5DC9843-E859-44B7-85AF-BA6F7868E851}"
+	ProjectSection(SolutionItems) = preProject
+		..\appveyor.yml = ..\appveyor.yml
+		..\README.markdown = ..\README.markdown
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
