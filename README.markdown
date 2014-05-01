@@ -1,5 +1,7 @@
 # DynamicRestClient #
 
+[![Build status](https://ci.appveyor.com/api/projects/status/foykr8ldk1jqegot)](https://ci.appveyor.com/project/albertjan/dynamicrestclient)
+
 A simple REST client. Using Dynamics.
 
 Lets asume there is a api at someapi.com which has a route `/things` to which you can do a get request it will return json containing a list of thing objects. You could write a client for this api like this:
