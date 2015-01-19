@@ -1,6 +1,6 @@
 # DynamicRestClient #
 
-[![Build status](https://ci.appveyor.com/api/projects/status/foykr8ldk1jqegot)](https://ci.appveyor.com/project/albertjan/dynamicrestclient)
+[![Build status](https://ci.appveyor.com/api/projects/status/foykr8ldk1jqegot)](https://ci.appveyor.com/project/albertjan/dynamicrestclient) [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/albertjan/DynamicRestClient?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 A simple REST client. Using Dynamics.
 
